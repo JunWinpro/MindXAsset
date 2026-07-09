@@ -8,9 +8,11 @@ const Header = () => {
     <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-50 flex justify-between items-center shadow-sm">
       <div className="flex items-center gap-3">
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition">
-          <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shadow-md">
-            <span className="text-white font-extrabold text-2xl tracking-tighter" style={{ fontFamily: 'sans-serif' }}>M</span>
-          </div>
+          <img 
+            src="https://mindx.edu.vn/favicon.ico" 
+            alt="MindX Logo" 
+            className="w-10 h-10 rounded-xl shadow-md object-cover"
+          />
           <h1 className="text-2xl font-bold text-red-600 tracking-tight">
             MindXAsset
           </h1>
