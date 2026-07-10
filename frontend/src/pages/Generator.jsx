@@ -23,7 +23,8 @@ const Generator = () => {
     setImageResult(null);
 
     try {
-      const endpoint = model === 'huggingface' ? 'http://localhost:5000/api/generate-image-hf' : 'http://localhost:5000/api/generate-image';
+      const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://mindxasset.onrender.com';
+      const endpoint = model === 'huggingface' ? `${baseUrl}/api/generate-image-hf` : `${baseUrl}/api/generate-image`;
       
       const response = await fetch(endpoint, {
         method: 'POST',
