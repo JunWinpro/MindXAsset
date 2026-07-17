@@ -6,7 +6,7 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Cấu hình CORS để Frontend (port 5173 của Vite) có thể gọi API
+
 app.use(cors());
 app.use(express.json());
 
@@ -31,7 +31,7 @@ app.post('/api/generate-image', async (req, res) => {
     let finalPrompt = `${prompt}, ${assetType}, ${artStyle} style, ${perspective} perspective`;
     let targetModel = model;
     
-    const config = { responseType: 'arraybuffer' };
+    const config = { responseType: 'arraybuffer', timeout: 15000 }; // Đặt timeout 15 giây để chống treo web
     if (apiKey && apiKey !== 'sk_your_secret_key_here') {
       config.headers = { 'Authorization': `Bearer ${apiKey}` };
     }
@@ -53,14 +53,14 @@ app.post('/api/generate-image', async (req, res) => {
     }
 
     const encodedPrompt = encodeURIComponent(finalPrompt);
-    let url = `https://gen.pollinations.ai/image/${encodedPrompt}?model=${targetModel}`;
+    let url = `https://image.pollinations.ai/prompt/${encodedPrompt}?model=${targetModel}`;
     
-    // Add dimensions based on ratio
+
     if (ratio === '16:9') url += '&width=1024&height=576';
     else if (ratio === '9:16') url += '&width=576&height=1024';
     else url += '&width=1024&height=1024';
 
-    // Add transparent flag
+
     if (transparent) {
       url += '&transparent=true';
     }

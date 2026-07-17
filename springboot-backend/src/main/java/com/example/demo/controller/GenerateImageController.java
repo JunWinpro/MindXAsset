@@ -72,7 +72,7 @@ public class GenerateImageController {
             }
             
             String encodedPrompt = URLEncoder.encode(finalPrompt, StandardCharsets.UTF_8.toString());
-            String url = "https://gen.pollinations.ai/image/" + encodedPrompt + "?model=" + targetModel;
+            String url = "https://image.pollinations.ai/prompt/" + encodedPrompt + "?model=" + targetModel;
             
             if ("16:9".equals(request.getRatio())) url += "&width=1024&height=576";
             else if ("9:16".equals(request.getRatio())) url += "&width=576&height=1024";

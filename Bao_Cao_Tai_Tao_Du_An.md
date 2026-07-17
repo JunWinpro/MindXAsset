@@ -155,7 +155,7 @@ async def generate_image(req: ImageRequest):
     
     final_prompt = f"{req.prompt}, {req.assetType}, {req.artStyle} style, {req.perspective} perspective"
     encoded_prompt = urllib.parse.quote(final_prompt)
-    url = f"https://gen.pollinations.ai/image/{encoded_prompt}?model={req.model}"
+    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?model={req.model}"
     
     if req.transparent:
         url += "&transparent=true"

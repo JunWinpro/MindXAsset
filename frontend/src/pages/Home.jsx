@@ -36,28 +36,28 @@ const Home = () => {
 
         {/* Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-12">
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm text-left">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm text-left hover:shadow-md transition-shadow">
             <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center text-red-600 mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Nhân vật (Characters)</h3>
-            <p className="text-gray-600 text-sm">Tạo nhân vật game với nhiều góc nhìn (Isometric, Top-down) và phong cách đa dạng.</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Nhân Vật (Characters)</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">Khởi tạo nhanh chóng các nguyên mẫu nhân vật với đa dạng góc nhìn (Isometric, Top-down, Side-scroller) và phong cách nghệ thuật tuỳ chỉnh (Pixel Art, Anime, 3D).</p>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm text-left">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm text-left hover:shadow-md transition-shadow">
             <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center text-red-600 mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Vật phẩm (Props/Items)</h3>
-            <p className="text-gray-600 text-sm">Tự động tạo kiếm, khiên, lọ thuốc với nền trong suốt (transparent background).</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Vật Phẩm (Props & Items)</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">Sinh tự động các rương báu, vũ khí, vật phẩm trang bị. Hỗ trợ bóc tách nền (transparent background) sẵn sàng import trực tiếp vào Game Engine.</p>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm text-left">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm text-left hover:shadow-md transition-shadow">
             <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center text-red-600 mb-4">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Hình nền (Environments)</h3>
-            <p className="text-gray-600 text-sm">Render hình nền chất lượng cao, từ bối cảnh Cyberpunk đến phong cảnh thần thoại.</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Bối Cảnh (Environments)</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">Thiết kế concept art và hình nền chất lượng cao cho nhiều thể loại từ Dungeon tăm tối, Cyberpunk tương lai đến phong cảnh thần thoại hùng vĩ.</p>
           </div>
         </div>
       </div>

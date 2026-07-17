@@ -2,7 +2,7 @@ const axios = require('axios');
 
 async function test() {
   try {
-    const url = 'https://gen.pollinations.ai/image/a%20beautiful%20cat?model=flux';
+    const url = 'https://image.pollinations.ai/prompt/a%20beautiful%20cat?model=flux';
     console.log('Fetching:', url);
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     console.log('Success, image length:', response.data.length);

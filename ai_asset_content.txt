@@ -1,0 +1,145 @@
+AI GAME ASSET STUDIO
+Báo cáo Nghiên cứu · Test Case · Tiến độ
+Module AI/Model — Prompt-to-Image Pipeline (Pollinations.ai)
+1. 
+Nghiên cứu
+1.1 Nền tảng sinh ảnh — Pollinations.ai
+Toolset dùng Pollinations.ai (model "flux") làm backend text-to-image, gọi qua REST API. Gói miễn phí không cần API key nhưng ảnh có watermark và giới hạn 1 request/15 giây; đăng ký API key tại enter.pollinations.ai để bỏ watermark và tăng tốc độ.
+1.2 Pipeline prompt-to-image
+Xây dựng PromptOptimizer để tối ưu prompt theo từng loại asset (background, sprite, sprite_sheet, tile), kèm negative prompt riêng cho từng loại nhằm loại các artefact thường gặp:
+Background: loại bỏ nhân vật, người, HUD/UI lẫn vào khung cảnh.
+Sprite: loại bỏ nền cảnh, nhiều vật thể/nhiều tư thế trong 1 ảnh.
+Sprite sheet: tránh các khung hình lệch tỉ lệ, ghép dính vào nhau.
+Tile: tránh việc model tự vẽ nguyên bộ tileset, có lưới/thước kẻ, phối cảnh, đổ bóng trong 1 tile đơn.
+1.3 Xử lý hậu kỳ pixel art
+Nghiên cứu và khắc phục các lỗi chất lượng khi ép ảnh về pixel art, tổng hợp thành pipeline hậu kỳ cố định:
+remove_background — tách nền trước khi resize để tránh viền nền lẫn vào biên vật thể.
+fit_to_canvas (LANCZOS) — canh khung theo tỉ lệ chuẩn trước khi pixel hoá.
+apply_pixel_art_effect — resample BOX khi thu nhỏ (chống răng cưa/nhiễu), NEAREST khi phóng to (giữ cạnh pixel sắc, không làm mờ).
+reduce_palette — giới hạn số màu để ra đúng pixel art thay vì ảnh AI nhiều màu gradient.
+binarize_alpha — ép kênh alpha về 0 hoặc 255, loại bỏ viền trong suốt mờ (semi-transparent edges) hay gặp sau remove-background.
+1.4 Thử nghiệm image-to-image (model kontext)
+Đã thử dùng model kontext của Pollinations để giữ nhất quán hình dáng nhân vật giữa các frame animation (image-to-image thay vì text-to-image từng frame riêng lẻ). Model này yêu cầu xác thực/credit mà tài khoản hiện tại chưa có, nên tính năng được thiết kế fail-fast: phát hiện lỗi 
+auth ngay, ghi log cảnh báo, và tự động rơi về flow sinh ảnh thông thường (graceful fallback) thay vì crash pipeline.
+1.5 Đóng gói tileset dạng lưới cho GameMaker
+Nghiên cứu định dạng tileset chuẩn của GameMaker/Tiled (tile_width, tile_height, columns, margin, spacing) để thiết kế compose_grid: ghép nhiều tile riêng lẻ (mỗi tile là một lần gọi API + hậu kỳ pixel art) vào một sheet duy nhất theo lưới cố định, xuất kèm file .json mô tả layout và tên/toạ độ từng tile để import tự động thay vì canh tay từng ô trong editor.
+2. Test case
+Các test case dưới đây bao phủ luồng sinh asset chính (background
+, 
+sprite
+, 
+pixel
+, 
+tilesheet
+, 
+tileset), việc validate input, và tính đúng đắn của pipeline hậu kỳ. Phần lớn đã chạy với fake provider (không tốn quota API) để xác nhận logic; các case đánh dấu "Cần chạy với API thật" cần thực hiện lại với Pollinations.ai trước khi release.
+STT
+Test case
+Input / Lệnh chạy
+Kết quả mong đợi
+Trạng thái
+TC01
+Sinh background cơ bản
+cli.py background "dark dungeon cave" --size background_sd --style pixel_art
+Trả về PNG đúng 1280×720, lưu vào output/backgrounds/
+Đạt (Pass)
+TC02
+Sinh sprite nền trong suốt
+cli.py sprite "knight warrior" --transparent --size sprite_medium
+PNG 128×128, alpha nhị phân (0/255), không viền mờ
+Đạt (Pass)
+TC03
+Sinh pixel art từ text
+cli.py pixel "wooden shield" --block 4 --colors 16
+Ảnh giảm còn ≤16 màu, cạnh pixel sắc nét (không blur)
+Đạt (Pass)
+TC04
+Chuyển ảnh có sẵn sang pixel art
+cli.py pixel-from-image ./input.png --block 4
+Giữ bố cục gốc, nền được tách, alpha nhị phân
+TC05
+Sinh tilesheet nhiều khung hình
+cli.py tilesheet "running robot" --frames 10 --slice
+Sheet ngang 10 frame cùng seed nhất quán + 10 file frame lẻ
+TC06
+Sinh tileset theo preset
+cli.py tileset --preset platformer_basic --cell-size tile_32 --columns 8 --slice
+Sheet dạng lưới 24 tile, 
+kèm .json
+ layout + tile lẻ đã cắt
+Đạt (Pass)
+TC07
+Sinh tileset tự chọn danh sách tile
+cli.py tileset "grass tile" "water tile" "lava tile" --cell-size tile_16 --columns 4
+Sheet 3 tile, kích thước ô đúng 16×16, spacing đúng tham số
+Đạt (Pass)
+TC08
+Validate size key không hợp lệ
+cli.py sprite "cat" --size tile_32 (size sai nhóm)
+argparse chặn ngay, báo lỗi choices hợp lệ
+Đạt (Pass)
+TC09
+Tileset không có tiles và không có --preset
+cli.py tileset (không tham số)
+parser.error
+("tileset requires either tile subjects or --preset")
+Đạt (Pass)
+TC10
+Preset tileset không tồn tại
+generate_tileset(preset="khong_ton_tai")
+Raise ValueError kèm danh sách preset hợp lệ
+Đạt (Pass)
+TC11
+Seed cố định — tái lập kết quả
+Chạy 2 lần cùng --seed 42
+Cùng seed trả về ảnh giống nhau (theo provider hỗ trợ seed)
+Cần chạy với API thật
+TC12
+Kiểm tra JSON sidecar của tileset
+Đọc tileset_
+*.json
+ sau khi sinh
+Đúng tile_width/height, columns, rows, margin, spacing, tên & toạ độ từng tile
+Đạt (Pass)
+TC13
+Ảnh-đến-ảnh giữ nhất quán nhân vật (kontext)
+convert với model kontext, không có credit/API key
+Fallback về flow thường, log warning, không crash pipeline
+Đạt (Pass)
+TC14
+Tileset quy mô lớn nhiều preset gộp
+~45 tile, cell 64×64, columns 10
+Sheet lớn không lỗi bố cục, mọi ô đúng vị trí lưới
+Cần chạy với API thật
+3. Tiến độ
+Hạng mục
+Chi tiết
+Trạng thái
+Pipeline sinh ảnh cơ bản
+generate_background / generate_sprite / generate_pixel_art qua Pollinations.ai (flux)
+Đã hoàn thành
+Tilesheet hoạt ảnh
+generate_tileset_pack cho sprite chuyển động, cắt frame lẻ, seed nhất quán giữa các frame
+Đang thực hiện
+Sửa lỗi chất lượng pixel art
+Resample BOX (thu nhỏ) / NEAREST (phóng to), reduce_palette, binarize_alpha để hết mờ & viền alpha mềm
+Đã hoàn thành
+Image-to-image (model kontext)
+Thử giữ nhất quán nhân vật giữa các frame; bị chặn do yêu cầu xác thực/credit của Pollinations
+Chặn
+Sinh tileset dạng lưới cho GameMaker
+generate_tileset(): đóng gói tile theo lưới cố định, margin/spacing, xuất kèm .json layout; lệnh CLI tileset
+Đã hoàn thành
+Bộ preset tile dựng sẵn
+platformer_basic / dungeon / cave — danh sách tile mẫu để sinh nhanh không cần tự liệt kê
+Đã hoàn thành
+Kiểm thử với API thật (không dùng fake provider)
+Chạy toàn bộ test case TC11, TC14 với Pollinations.ai thật để xác nhận chất lượng ảnh
+Đang thực hiện
+Tài liệu hướng dẫn (README)
+Cập nhật bảng size, hướng dẫn lệnh tileset, cấu trúc thư mục output
+Đã hoàn thành
+Kế hoạch tiếp theo
+Chạy TC11 & TC14 với Pollinations.ai thật, xác nhận chất lượng ảnh và độ ổn định seed.
+Theo dõi lại tính năng image-to-image (kontext) khi có credit/API key phù hợp.
+Bổ sung thêm preset tileset theo nhu cầu khoá học Scratch/GameMaker (ví dụ: sci-fi, mùa đông).
