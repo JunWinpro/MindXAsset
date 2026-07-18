@@ -189,21 +189,23 @@ const Generator = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">Loại Asset</label>
-              <select
-                className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
-                value={assetType}
-                onChange={(e) => setAssetType(e.target.value)}
-              >
-                <option value="Character">Nhân vật</option>
-                <option value="Prop/Item">Vật phẩm</option>
-                <option value="Background">Hình nền</option>
-                <option value="UI Element">Giao diện (UI)</option>
-                <option value="VFX Effect">Hiệu ứng (VFX)</option>
-              </select>
-            </div>
+          <div className={`grid ${model === 'ai_team_background' ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+            {model !== 'ai_team_background' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">Loại Asset</label>
+                <select
+                  className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
+                  value={assetType}
+                  onChange={(e) => setAssetType(e.target.value)}
+                >
+                  <option value="Character">Nhân vật</option>
+                  <option value="Prop/Item">Vật phẩm</option>
+                  <option value="Background">Hình nền</option>
+                  <option value="UI Element">Giao diện (UI)</option>
+                  <option value="VFX Effect">Hiệu ứng (VFX)</option>
+                </select>
+              </div>
+            )}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">Phong cách</label>
               <select
@@ -221,21 +223,23 @@ const Generator = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">Góc nhìn</label>
-              <select
-                className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
-                value={perspective}
-                onChange={(e) => setPerspective(e.target.value)}
-              >
-                <option value="Isometric">Isometric (2.5D)</option>
-                <option value="Top-down">Từ trên xuống</option>
-                <option value="Side-scroller">Mặt ngang (2D)</option>
-                <option value="Portrait">Chân dung</option>
-                <option value="Front">Chính diện</option>
-              </select>
-            </div>
+          <div className={`grid ${model === 'ai_team_background' ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+            {model !== 'ai_team_background' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">Góc nhìn</label>
+                <select
+                  className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
+                  value={perspective}
+                  onChange={(e) => setPerspective(e.target.value)}
+                >
+                  <option value="Isometric">Isometric (2.5D)</option>
+                  <option value="Top-down">Từ trên xuống</option>
+                  <option value="Side-scroller">Mặt ngang (2D)</option>
+                  <option value="Portrait">Chân dung</option>
+                  <option value="Front">Chính diện</option>
+                </select>
+              </div>
+            )}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">Khung hình</label>
               <select
@@ -250,18 +254,20 @@ const Generator = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200 mt-2">
-            <span className="text-sm font-semibold text-gray-800">Nền trong suốt (Tách nền)</span>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                className="sr-only peer"
-                checked={transparent}
-                onChange={(e) => setTransparent(e.target.checked)}
-              />
-              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-            </label>
-          </div>
+          {model !== 'ai_team_background' && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200 mt-2">
+              <span className="text-sm font-semibold text-gray-800">Nền trong suốt (Tách nền)</span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer"
+                  checked={transparent}
+                  onChange={(e) => setTransparent(e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+              </label>
+            </div>
+          )}
 
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-start gap-3">
