@@ -8,6 +8,7 @@ const Generator = () => {
   const [perspective, setPerspective] = useState('Isometric');
   const [ratio, setRatio] = useState('1:1');
   const [transparent, setTransparent] = useState(true);
+  const [timeOfDay, setTimeOfDay] = useState('day');
   
   const [imageResult, setImageResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -24,31 +25,58 @@ const Generator = () => {
 
     try {
       const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://mindxasset.onrender.com';
-      const endpoint = model === 'huggingface' ? `${baseUrl}/api/generate-image-hf` : `${baseUrl}/api/generate-image`;
+      let endpoint = `${baseUrl}/api/generate-image`;
+      if (model === 'huggingface') endpoint = `${baseUrl}/api/generate-image-hf`;
+      else if (model === 'ai_team_background') endpoint = `${baseUrl}/api/generate-background`;
       
+      let bodyData = { 
+        prompt, 
+        model,
+        assetType,
+        artStyle,
+        perspective,
+        ratio,
+        transparent
+      };
+      
+      if (model === 'ai_team_background') {
+        let size_key = 'background_hd';
+        if (ratio === '1:1') size_key = 'background_sq';
+        else if (ratio === '9:16') size_key = 'background_sd';
+        else if (ratio === '16:9') size_key = 'background_hd';
+        
+        let mappedStyle = 'pixel_art';
+        if (artStyle === '3D Low Poly' || artStyle === 'Realistic') mappedStyle = 'realistic';
+        else if (artStyle === 'Anime') mappedStyle = 'cartoon';
+        
+        bodyData = {
+          subject: prompt,
+          size_key,
+          style: mappedStyle,
+          time_of_day: timeOfDay,
+          seed: -1
+        };
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          prompt, 
-          model,
-          assetType,
-          artStyle,
-          perspective,
-          ratio,
-          transparent
-        }),
+        body: JSON.stringify(bodyData),
       });
 
       const data = await response.json();
 
-      if (!response.ok || !data.image) {
+      if (!response.ok || !(data.image || data.file_path)) {
         throw new Error(data.error || 'Đã có lỗi xảy ra!');
       }
 
-      setImageResult(data.image);
+      if (data.file_path) {
+        setImageResult(`${baseUrl}/${data.file_path}`);
+      } else {
+        setImageResult(data.image);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -56,8 +84,27 @@ const Generator = () => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!imageResult) return;
+    
+    if (imageResult.startsWith('http')) {
+      try {
+        const response = await fetch(imageResult);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `mindx-asset-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        console.error('Lỗi khi tải ảnh URL:', err);
+        window.open(imageResult, '_blank');
+      }
+      return;
+    }
     
     try {
       const [header, base64] = imageResult.split(',');
@@ -122,8 +169,25 @@ const Generator = () => {
               <option value="huggingface">Hugging Face (Miễn phí)</option>
               <option value="gemini">Gemini (Dịch & Tối ưu Prompt)</option>
               <option value="flux">Pollinations (Vẽ trực tiếp)</option>
+              <option value="ai_team_background">AI Team Spec (Tạo Background)</option>
             </select>
           </div>
+
+          {model === 'ai_team_background' && (
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700">Thời gian trong ngày</label>
+              <select
+                className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
+                value={timeOfDay}
+                onChange={(e) => setTimeOfDay(e.target.value)}
+              >
+                <option value="day">Ban ngày (Day)</option>
+                <option value="night">Ban đêm (Night)</option>
+                <option value="dusk">Hoàng hôn (Dusk)</option>
+                <option value="dawn">Bình minh (Dawn)</option>
+              </select>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">

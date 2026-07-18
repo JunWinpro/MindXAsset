@@ -11,7 +11,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.UUID;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.io.File;
 import org.springframework.beans.factory.annotation.Value;
+import com.example.demo.dto.BackgroundRequest;
 
 @RestController
 @RequestMapping("/api")
@@ -117,6 +123,116 @@ public class GenerateImageController {
             e.printStackTrace();
             Map<String, String> error = new HashMap<>();
             error.put("error", "Lỗi máy chủ nội bộ. Không thể kết nối tới Pollinations.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @PostMapping("/generate-background")
+    public ResponseEntity<?> generateBackground(@RequestBody BackgroundRequest request) {
+        if (request.getSubject() == null || request.getSubject().isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Missing subject field");
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        try {
+            // 1. Prompt Optimizer Logic
+            String optimizedPrompt = request.getSubject();
+            
+            if (request.getTime_of_day() != null && !request.getTime_of_day().equals("day")) {
+                optimizedPrompt += ", " + request.getTime_of_day() + " time";
+            }
+            
+            if ("pixel_art".equals(request.getStyle())) {
+                optimizedPrompt += ", pixel art style, 8-bit";
+            } else if (request.getStyle() != null && !request.getStyle().isEmpty()) {
+                optimizedPrompt += ", " + request.getStyle().replace('_', ' ') + " style";
+            }
+            
+            // Strong negative prompt logic for empty scenery
+            optimizedPrompt += ", pure background scenery, empty landscape, no subjects. Avoid: characters, people, animals, creatures, HUD, UI, text.";
+            
+            String encodedPrompt = URLEncoder.encode(optimizedPrompt, StandardCharsets.UTF_8.toString());
+            
+            // 2. Resolution mapping
+            int width = 1920;
+            int height = 1080;
+            String sizeKey = request.getSize_key();
+            
+            if ("background_sd".equals(sizeKey)) {
+                width = 1280; height = 720;
+            } else if ("background_4k".equals(sizeKey)) {
+                width = 3840; height = 2160;
+            } else if ("background_sq".equals(sizeKey)) {
+                width = 1024; height = 1024;
+            } else if (sizeKey != null && sizeKey.contains("x")) {
+                String[] parts = sizeKey.toLowerCase().split("x");
+                if (parts.length == 2) {
+                    try {
+                        width = Integer.parseInt(parts[0]);
+                        height = Integer.parseInt(parts[1]);
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+            
+            // 3. API Call
+            String url = "https://image.pollinations.ai/prompt/" + encodedPrompt + "?model=flux&width=" + width + "&height=" + height;
+            int seed = request.getSeed();
+            if (seed != -1) {
+                url += "&seed=" + seed;
+            }
+            
+            HttpHeaders headers = new HttpHeaders();
+            if (pollinationsApiKey != null && !pollinationsApiKey.isEmpty() && !pollinationsApiKey.equals("sk_your_secret_key_here")) {
+                headers.set("Authorization", "Bearer " + pollinationsApiKey);
+                url += "&nologo=true";
+            }
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            System.out.println("Fetching AI Team Background from: " + url);
+            ResponseEntity<byte[]> response = restTemplate.exchange(url, HttpMethod.GET, entity, byte[].class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                // 4. Save image
+                Path outputDir = Paths.get("output", "backgrounds");
+                if (!Files.exists(outputDir)) {
+                    Files.createDirectories(outputDir);
+                }
+                
+                String actualFilename = request.getFilename() != null && !request.getFilename().isEmpty() 
+                                        ? request.getFilename() 
+                                        : "bg_" + System.currentTimeMillis() + "_" + sizeKey + ".png";
+                Path filePath = outputDir.resolve(actualFilename);
+                String relativePath = "output/backgrounds/" + actualFilename;
+                
+                Files.write(filePath, response.getBody());
+                
+                // 5. JSON Response
+                Map<String, Object> jsonResponse = new HashMap<>();
+                jsonResponse.put("asset_id", UUID.randomUUID().toString());
+                jsonResponse.put("asset_type", "background");
+                jsonResponse.put("prompt", optimizedPrompt);
+                jsonResponse.put("provider", "pollinations");
+                jsonResponse.put("model", "flux");
+                jsonResponse.put("seed", seed == -1 ? (int)(Math.random() * 100000) : seed);
+                jsonResponse.put("width", width);
+                jsonResponse.put("height", height);
+                jsonResponse.put("format", "png");
+                jsonResponse.put("file_path", relativePath);
+                jsonResponse.put("has_alpha", false);
+                jsonResponse.put("frames", new Object[0]);
+                jsonResponse.put("warnings", new Object[0]);
+                
+                return ResponseEntity.ok(jsonResponse);
+            } else {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Lỗi từ Pollinations API khi tạo background.");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Lỗi máy chủ nội bộ. Không thể tạo background.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }

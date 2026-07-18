@@ -3,12 +3,17 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 
 app.use(cors());
 app.use(express.json());
+app.use('/output', express.static(path.join(__dirname, 'output')));
 
 app.post('/api/generate-image', async (req, res) => {
   const { 
@@ -101,6 +106,117 @@ app.post('/api/generate-image', async (req, res) => {
     }
     
     res.status(500).json({ error: 'Lỗi máy chủ nội bộ. Không thể kết nối tới Pollinations.' });
+  }
+});
+
+app.post('/api/generate-background', async (req, res) => {
+  const {
+    subject,
+    size_key = 'background_hd',
+    style = 'pixel_art',
+    time_of_day = 'day',
+    seed = -1,
+    filename = ''
+  } = req.body;
+
+  if (!subject) {
+    return res.status(400).json({ error: 'Missing subject field' });
+  }
+
+  try {
+    const apiKey = process.env.POLLINATIONS_API_KEY ? process.env.POLLINATIONS_API_KEY.trim() : null;
+    
+    // 1. Prompt Optimizer Logic
+    let optimizedPrompt = subject;
+    
+    // Add time of day
+    if (time_of_day && time_of_day !== 'day') {
+      optimizedPrompt += `, ${time_of_day} time`;
+    }
+    
+    // Add style
+    if (style === 'pixel_art') {
+      optimizedPrompt += `, pixel art style, 8-bit`;
+    } else if (style) {
+      optimizedPrompt += `, ${style.replace('_', ' ')} style`;
+    }
+    
+    // Add negative prompt for background
+    optimizedPrompt += `, pure background scenery, empty landscape, no subjects. Avoid: characters, people, animals, creatures, HUD, UI, text.`;
+    
+    const encodedPrompt = encodeURIComponent(optimizedPrompt);
+    
+    // 2. Resolution mapping
+    let width = 1920;
+    let height = 1080;
+    
+    if (size_key === 'background_sd') {
+      width = 1280; height = 720;
+    } else if (size_key === 'background_4k') {
+      width = 3840; height = 2160;
+    } else if (size_key === 'background_sq') {
+      width = 1024; height = 1024;
+    } else if (size_key && size_key.includes('x')) {
+      const parts = size_key.toLowerCase().split('x');
+      if (parts.length === 2) {
+        const w = parseInt(parts[0], 10);
+        const h = parseInt(parts[1], 10);
+        if (!isNaN(w) && !isNaN(h)) {
+          width = w;
+          height = h;
+        }
+      }
+    }
+    
+    // 3. API Call
+    let url = `https://image.pollinations.ai/prompt/${encodedPrompt}?model=flux&width=${width}&height=${height}`;
+    if (seed !== -1) {
+      url += `&seed=${seed}`;
+    }
+    
+    const config = { responseType: 'arraybuffer', timeout: 30000 };
+    if (apiKey && apiKey !== 'sk_your_secret_key_here') {
+      config.headers = { 'Authorization': `Bearer ${apiKey}` };
+      url += '&nologo=true';
+    }
+    
+    console.log('Fetching AI Team Background from:', url);
+    const response = await axios.get(url, config);
+    
+    // 4. Save image
+    const outputDir = path.join(__dirname, 'output', 'backgrounds');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+    
+    const actualFilename = filename || `bg_${Date.now()}_${size_key}.png`;
+    const filePath = path.join(outputDir, actualFilename);
+    const relativePath = `output/backgrounds/${actualFilename}`;
+    
+    fs.writeFileSync(filePath, response.data);
+    
+    // 5. JSON Response
+    const assetId = crypto.randomUUID();
+    
+    res.json({
+      asset_id: assetId,
+      asset_type: 'background',
+      prompt: optimizedPrompt,
+      provider: 'pollinations',
+      model: 'flux',
+      seed: seed === -1 ? Math.floor(Math.random() * 100000) : seed,
+      width: width,
+      height: height,
+      format: 'png',
+      file_path: relativePath,
+      has_alpha: false,
+      frames: [],
+      warnings: []
+    });
+
+  } catch (error) {
+    console.error('Error generating background:', error.message);
+    res.status(500).json({ error: 'Lỗi khi tạo background (AI Team Spec)' });
   }
 });
 
