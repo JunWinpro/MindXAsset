@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1784824794675",
+    "prompt": "a sword made by pork",
+    "style": "Anime",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/sprite_1784824791859.png",
+    "created_at": "2026-07-23T16:39:54.675Z"
+  },
+  {
+    "id": "1784824137579",
+    "prompt": "Mot nhan vat anh hung",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/fallback_1784824137544.png",
+    "created_at": "2026-07-23T16:28:57.579Z"
+  },
+  {
+    "id": "1784823555207",
+    "prompt": "a cute dog",
+    "style": "Pixel Art",
+    "type": "Concept Art",
+    "image_url": "http://localhost:5000/output/fallback_1784823555174.png",
+    "created_at": "2026-07-23T16:19:15.207Z"
+  }
+]

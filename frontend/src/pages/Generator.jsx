@@ -1,18 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Generator = () => {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState('flux');
-  const [assetType, setAssetType] = useState('Character');
+  
+  // States chung
+  const [assetType, setAssetType] = useState('Character'); // Cho model thường
+  const [aiTeamAssetType, setAiTeamAssetType] = useState('sprite'); // Cho AI Team
+  
   const [artStyle, setArtStyle] = useState('Pixel Art');
   const [perspective, setPerspective] = useState('Isometric');
   const [ratio, setRatio] = useState('1:1');
   const [transparent, setTransparent] = useState(true);
+  
+  // AI Team specific
   const [timeOfDay, setTimeOfDay] = useState('day');
+  const [aiTeamAction, setAiTeamAction] = useState('running');
+  const [aiTeamFrames, setAiTeamFrames] = useState(10);
+  const [aiTeamColumns, setAiTeamColumns] = useState(8);
+  const [aiTeamCellSize, setAiTeamCellSize] = useState('32x32');
   
   const [imageResult, setImageResult] = useState(null);
+  const [zipUrl, setZipUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Tự động điều chỉnh các tuỳ chọn mặc định khi đổi Model để tránh lỗi UI
+  useEffect(() => {
+    if (model === 'ai_team') {
+      if (!['background', 'sprite', 'pixel', 'tilesheet', 'tileset'].includes(aiTeamAssetType)) {
+        setAiTeamAssetType('sprite');
+      }
+    }
+  }, [model, aiTeamAssetType]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -22,40 +42,64 @@ const Generator = () => {
     setError('');
     setLoading(true);
     setImageResult(null);
+    setZipUrl(null);
 
     try {
       const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://mindxasset.onrender.com';
       let endpoint = `${baseUrl}/api/generate-image`;
-      if (model === 'huggingface') endpoint = `${baseUrl}/api/generate-image-hf`;
-      else if (model === 'ai_team_background') endpoint = `${baseUrl}/api/generate-background`;
       
       let bodyData = { 
         prompt, 
         model,
-        assetType,
+        assetType: model === 'ai_team' ? aiTeamAssetType : assetType,
         artStyle,
         perspective,
         ratio,
         transparent
       };
-      
-      if (model === 'ai_team_background') {
-        let size_key = 'background_hd';
-        if (ratio === '1:1') size_key = 'background_sq';
-        else if (ratio === '9:16') size_key = 'background_sd';
-        else if (ratio === '16:9') size_key = 'background_hd';
-        
-        let mappedStyle = 'pixel_art';
-        if (artStyle === '3D Low Poly' || artStyle === 'Realistic') mappedStyle = 'realistic';
-        else if (artStyle === 'Anime') mappedStyle = 'cartoon';
-        
-        bodyData = {
-          subject: prompt,
-          size_key,
-          style: mappedStyle,
-          time_of_day: timeOfDay,
-          seed: -1
-        };
+
+      if (model === 'huggingface') {
+        endpoint = `${baseUrl}/api/generate-image-hf`;
+      } else if (model === 'ai_team') {
+        if (aiTeamAssetType === 'background') {
+          endpoint = `${baseUrl}/api/generate-background`;
+          bodyData = {
+            subject: prompt,
+            size_key: ratio === '1:1' ? 'background_sq' : (ratio === '16:9' ? 'background_hd' : 'background_sd'),
+            style: artStyle,
+            time_of_day: timeOfDay,
+            seed: -1
+          };
+        } else if (aiTeamAssetType === 'sprite' || aiTeamAssetType === 'pixel') {
+          endpoint = `${baseUrl}/api/generate-sprite`;
+          bodyData = {
+            subject: aiTeamAssetType === 'pixel' ? prompt + ' limited color palette' : prompt,
+            size_key: ratio === '1:1' ? '64x64' : (ratio === '16:9' ? '128x128' : '32x32'),
+            style: artStyle,
+            perspective: perspective,
+            seed: -1
+          };
+        } else if (aiTeamAssetType === 'tilesheet') {
+          endpoint = `${baseUrl}/api/generate-tilesheet`;
+          bodyData = {
+            subject: prompt,
+            action: aiTeamAction,
+            frames: aiTeamFrames,
+            style: artStyle,
+            perspective: perspective,
+            seed: -1
+          };
+        } else if (aiTeamAssetType === 'tileset') {
+          endpoint = `${baseUrl}/api/generate-tileset`;
+          bodyData = {
+            subject: prompt,
+            size_key: aiTeamCellSize,
+            columns: aiTeamColumns,
+            style: artStyle,
+            perspective: perspective,
+            seed: -1
+          };
+        }
       }
 
       const response = await fetch(endpoint, {
@@ -77,6 +121,11 @@ const Generator = () => {
       } else {
         setImageResult(data.image);
       }
+      
+      if (data.zip_url) {
+        setZipUrl(`${baseUrl}/${data.zip_url}`);
+      }
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -84,7 +133,7 @@ const Generator = () => {
     }
   };
 
-  const handleDownload = async () => {
+  const handleDownloadImage = async () => {
     if (!imageResult) return;
     
     if (imageResult.startsWith('http')) {
@@ -149,6 +198,7 @@ const Generator = () => {
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col gap-5">
           <h2 className="text-xl font-semibold text-gray-800 border-b border-gray-100 pb-3">Cấu hình Asset</h2>
           
+          {/* Prompt */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700">Mô tả ý tưởng (Tiếng Việt)</label>
             <textarea
@@ -159,8 +209,9 @@ const Generator = () => {
             />
           </div>
 
+          {/* Model */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">AI Model</label>
+            <label className="text-sm font-semibold text-gray-700">AI Model / Pipeline</label>
             <select
               className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
               value={model}
@@ -169,30 +220,27 @@ const Generator = () => {
               <option value="huggingface">Hugging Face (Miễn phí)</option>
               <option value="gemini">Gemini (Dịch & Tối ưu Prompt)</option>
               <option value="flux">Pollinations (Vẽ trực tiếp)</option>
-              <option value="ai_team_background">AI Team Spec (Tạo Background)</option>
+              <option value="ai_team">AI Team Pipeline (Chuyên sâu)</option>
             </select>
           </div>
 
-          {model === 'ai_team_background' && (
+          {/* Asset Type & Style (Grid 2 cột LUÔN HIỂN THỊ ĐỒNG BỘ) */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">Thời gian trong ngày</label>
-              <select
-                className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
-                value={timeOfDay}
-                onChange={(e) => setTimeOfDay(e.target.value)}
-              >
-                <option value="day">Ban ngày (Day)</option>
-                <option value="night">Ban đêm (Night)</option>
-                <option value="dusk">Hoàng hôn (Dusk)</option>
-                <option value="dawn">Bình minh (Dawn)</option>
-              </select>
-            </div>
-          )}
-
-          <div className={`grid ${model === 'ai_team_background' ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
-            {model !== 'ai_team_background' && (
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-gray-700">Loại Asset</label>
+              <label className="text-sm font-semibold text-gray-700">Loại Asset</label>
+              {model === 'ai_team' ? (
+                <select
+                  className="w-full rounded-xl bg-gray-50 border border-red-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
+                  value={aiTeamAssetType}
+                  onChange={(e) => setAiTeamAssetType(e.target.value)}
+                >
+                  <option value="background">Cảnh quan</option>
+                  <option value="sprite">Nhân vật / Vật phẩm</option>
+                  <option value="pixel">Ép Pixel Art</option>
+                  <option value="tilesheet">Hoạt ảnh (Tilesheet)</option>
+                  <option value="tileset">Gạch môi trường (Tileset)</option>
+                </select>
+              ) : (
                 <select
                   className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
                   value={assetType}
@@ -204,8 +252,9 @@ const Generator = () => {
                   <option value="UI Element">Giao diện (UI)</option>
                   <option value="VFX Effect">Hiệu ứng (VFX)</option>
                 </select>
-              </div>
-            )}
+              )}
+            </div>
+
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">Phong cách</label>
               <select
@@ -223,51 +272,112 @@ const Generator = () => {
             </div>
           </div>
 
-          <div className={`grid ${model === 'ai_team_background' ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
-            {model !== 'ai_team_background' && (
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-gray-700">Góc nhìn</label>
-                <select
-                  className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
-                  value={perspective}
-                  onChange={(e) => setPerspective(e.target.value)}
-                >
-                  <option value="Isometric">Isometric (2.5D)</option>
-                  <option value="Top-down">Từ trên xuống</option>
-                  <option value="Side-scroller">Mặt ngang (2D)</option>
-                  <option value="Portrait">Chân dung</option>
-                  <option value="Front">Chính diện</option>
-                </select>
-              </div>
-            )}
+          {/* Perspective & Size (Grid 2 cột LUÔN HIỂN THỊ ĐỒNG BỘ) */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">Khung hình</label>
+              <label className="text-sm font-semibold text-gray-700">Góc nhìn</label>
+              <select
+                className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
+                value={perspective}
+                onChange={(e) => setPerspective(e.target.value)}
+              >
+                <option value="Isometric">Isometric (2.5D)</option>
+                <option value="Top-down">Từ trên xuống</option>
+                <option value="Side-scroller">Mặt ngang (2D)</option>
+                <option value="Portrait">Chân dung</option>
+                <option value="Front">Chính diện</option>
+              </select>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700">Tỉ lệ / Kích thước</label>
               <select
                 className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition cursor-pointer"
                 value={ratio}
                 onChange={(e) => setRatio(e.target.value)}
               >
-                <option value="1:1">Vuông (1:1)</option>
-                <option value="16:9">Ngang (16:9)</option>
-                <option value="9:16">Dọc (9:16)</option>
+                {model === 'ai_team' && (aiTeamAssetType === 'sprite' || aiTeamAssetType === 'pixel') ? (
+                  <>
+                    <option value="1:1">64x64 px (Chuẩn)</option>
+                    <option value="16:9">128x128 px (Lớn)</option>
+                    <option value="9:16">32x32 px (Nhỏ)</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="1:1">Vuông (1:1)</option>
+                    <option value="16:9">Ngang (16:9)</option>
+                    <option value="9:16">Dọc (9:16)</option>
+                  </>
+                )}
               </select>
             </div>
           </div>
 
-          {model !== 'ai_team_background' && (
-            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200 mt-2">
-              <span className="text-sm font-semibold text-gray-800">Nền trong suốt (Tách nền)</span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer"
-                  checked={transparent}
-                  onChange={(e) => setTransparent(e.target.checked)}
-                />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-              </label>
+          {/* AI Team Specific Options (Hiển thị mượt mà bên dưới) */}
+          {model === 'ai_team' && (
+            <div className="flex flex-col gap-3 p-4 bg-red-50/50 border border-red-100 rounded-xl">
+
+              
+              {aiTeamAssetType === 'background' && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-700">Thời gian trong ngày</label>
+                  <select className="w-full rounded-lg bg-white border border-gray-300 p-2 text-sm" value={timeOfDay} onChange={e => setTimeOfDay(e.target.value)}>
+                    <option value="day">Ban ngày (Day)</option>
+                    <option value="night">Ban đêm (Night)</option>
+                    <option value="dusk">Hoàng hôn (Dusk)</option>
+                    <option value="dawn">Bình minh (Dawn)</option>
+                  </select>
+                </div>
+              )}
+
+              {aiTeamAssetType === 'tilesheet' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-700">Hành động</label>
+                    <input type="text" className="w-full rounded-lg bg-white border border-gray-300 p-2 text-sm" value={aiTeamAction} onChange={e => setAiTeamAction(e.target.value)} placeholder="VD: running"/>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-700">Số khung hình</label>
+                    <input type="number" min="2" max="24" className="w-full rounded-lg bg-white border border-gray-300 p-2 text-sm" value={aiTeamFrames} onChange={e => setAiTeamFrames(parseInt(e.target.value) || 10)} />
+                  </div>
+                </div>
+              )}
+
+              {aiTeamAssetType === 'tileset' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-700">Kích thước ô (Cell)</label>
+                    <select className="w-full rounded-lg bg-white border border-gray-300 p-2 text-sm" value={aiTeamCellSize} onChange={e => setAiTeamCellSize(e.target.value)}>
+                      <option value="16x16">16x16</option>
+                      <option value="32x32">32x32</option>
+                      <option value="64x64">64x64</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-700">Số cột (Columns)</label>
+                    <input type="number" min="2" max="16" className="w-full rounded-lg bg-white border border-gray-300 p-2 text-sm" value={aiTeamColumns} onChange={e => setAiTeamColumns(parseInt(e.target.value) || 8)} />
+                  </div>
+                </div>
+              )}
+              
+              {/* Nếu là Sprite hoặc Pixel Art thì không cần config thêm */}
+              {/* Đã xóa dòng cảnh báo theo yêu cầu */}
             </div>
           )}
+
+          {/* Toggle Nền Trong Suốt */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
+            <span className="text-sm font-semibold text-gray-800">Nền trong suốt (Tách nền)</span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="sr-only peer"
+                checked={transparent}
+                onChange={(e) => setTransparent(e.target.checked)}
+              />
+              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+            </label>
+          </div>
 
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-start gap-3">
@@ -281,7 +391,7 @@ const Generator = () => {
           <button
             onClick={handleGenerate}
             disabled={loading}
-            className={`mt-4 w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-sm flex items-center justify-center gap-2 ${
+            className={`mt-2 w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-sm flex items-center justify-center gap-2 ${
               loading
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
                 : 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white'
@@ -316,32 +426,52 @@ const Generator = () => {
             </svg>
             Kết quả (Preview)
           </h3>
-          {imageResult && (
-            <button 
-              onClick={handleDownload}
-              className="px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg text-sm font-medium transition flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Tải xuống
-            </button>
-          )}
+          <div className="flex gap-2">
+            {imageResult && !zipUrl && (
+              <button 
+                onClick={handleDownloadImage}
+                className="px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg text-sm font-medium transition flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Tải ảnh
+              </button>
+            )}
+            
+            {zipUrl && (
+              <a 
+                href={zipUrl}
+                download
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Tải xuống ZIP (Đã chia Frame/Tile)
+              </a>
+            )}
+          </div>
         </div>
         
-        <div className="flex-1 flex items-center justify-center p-8 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-gray-100/50 relative">
+        <div className="flex-1 flex items-center justify-center p-8 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-gray-100/50 relative overflow-auto">
           {loading ? (
             <div className="w-full max-w-2xl aspect-square md:aspect-video rounded-2xl bg-white border-2 border-gray-200 border-dashed flex flex-col items-center justify-center gap-4 shadow-sm">
               <div className="w-16 h-16 rounded-full border-4 border-red-100 border-t-red-600 animate-spin"></div>
               <p className="text-gray-600 font-medium tracking-wider">Hệ thống đang render asset...</p>
             </div>
           ) : imageResult ? (
-            <div className="relative group max-h-full max-w-full">
+            <div className="relative group max-h-full max-w-full flex flex-col items-center gap-4">
               <img 
                 src={imageResult} 
                 alt="Generated Asset" 
-                className="max-h-[70vh] object-contain rounded-xl shadow-xl transition-transform duration-500 hover:scale-[1.01]"
+                className="max-h-[60vh] object-contain rounded-xl shadow-xl transition-transform duration-500 hover:scale-[1.01]"
               />
+              {zipUrl && (
+                <div className="bg-white/80 backdrop-blur px-4 py-2 rounded-full shadow-sm text-sm font-medium text-gray-700 border border-gray-200">
+                  <span className="text-blue-600 font-bold">✓</span> Đã đóng gói cắt khung/gạch vào file ZIP
+                </div>
+              )}
             </div>
           ) : (
             <div className="w-full max-w-2xl aspect-square md:aspect-video rounded-2xl bg-white border-2 border-gray-200 border-dashed flex flex-col items-center justify-center gap-4 text-gray-400 shadow-sm">
