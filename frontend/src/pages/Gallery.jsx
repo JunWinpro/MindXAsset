@@ -9,7 +9,8 @@ const Gallery = () => {
   useEffect(() => {
     const fetchGallery = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/gallery');
+        const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://mindxasset.onrender.com';
+        const res = await axios.get(`${baseUrl}/api/gallery`);
         setItems(res.data);
       } catch (err) {
         console.error('Lỗi khi tải thư viện:', err);

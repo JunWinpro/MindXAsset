@@ -19,7 +19,8 @@ const Generator = () => {
   const [aiTeamFrames, setAiTeamFrames] = useState(10);
   const [aiTeamColumns, setAiTeamColumns] = useState(8);
   const [aiTeamCellSize, setAiTeamCellSize] = useState('32x32');
-  
+  const [aiTeamSpritePose, setAiTeamSpritePose] = useState('idle');
+  const [aiTeamPixelPalette, setAiTeamPixelPalette] = useState('gameboy');
   const [imageResult, setImageResult] = useState(null);
   const [zipUrl, setZipUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -72,8 +73,14 @@ const Generator = () => {
           };
         } else if (aiTeamAssetType === 'sprite' || aiTeamAssetType === 'pixel') {
           endpoint = `${baseUrl}/api/generate-sprite`;
+          let finalPrompt = prompt;
+          if (aiTeamAssetType === 'sprite') {
+            finalPrompt += ` pose: ${aiTeamSpritePose}`;
+          } else if (aiTeamAssetType === 'pixel') {
+            finalPrompt += ` color palette: ${aiTeamPixelPalette} limited colors`;
+          }
           bodyData = {
-            subject: aiTeamAssetType === 'pixel' ? prompt + ' limited color palette' : prompt,
+            subject: finalPrompt,
             size_key: ratio === '1:1' ? '64x64' : (ratio === '16:9' ? '128x128' : '32x32'),
             style: artStyle,
             perspective: perspective,
@@ -360,8 +367,33 @@ const Generator = () => {
                 </div>
               )}
               
-              {/* Nếu là Sprite hoặc Pixel Art thì không cần config thêm */}
-              {/* Đã xóa dòng cảnh báo theo yêu cầu */}
+              {aiTeamAssetType === 'sprite' && (
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-700">Tư thế (Pose)</label>
+                    <select className="w-full rounded-lg bg-white border border-gray-300 p-2 text-sm" value={aiTeamSpritePose} onChange={e => setAiTeamSpritePose(e.target.value)}>
+                      <option value="idle">Đứng yên (Idle)</option>
+                      <option value="walking">Đi bộ (Walking)</option>
+                      <option value="running">Chạy (Running)</option>
+                      <option value="attacking">Tấn công (Attacking)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+              
+              {aiTeamAssetType === 'pixel' && (
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-700">Bảng màu (Color Palette)</label>
+                    <select className="w-full rounded-lg bg-white border border-gray-300 p-2 text-sm" value={aiTeamPixelPalette} onChange={e => setAiTeamPixelPalette(e.target.value)}>
+                      <option value="gameboy">Gameboy (4 colors)</option>
+                      <option value="monochrome">Đơn sắc (Monochrome)</option>
+                      <option value="nes">NES (8-bit)</option>
+                      <option value="full">Đầy đủ màu (Full Color)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
