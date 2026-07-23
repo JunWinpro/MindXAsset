@@ -373,8 +373,8 @@ app.post('/api/generate-tilesheet', async (req, res) => {
     // Upload lên Cloudinary
     uploadToCloudinary(Buffer.from(response.data)).then(url => { const cPrompt = typeof prompt !== 'undefined' ? prompt : (typeof subject !== 'undefined' ? subject : 'Asset'); const cStyle = typeof style !== 'undefined' ? style : (typeof artStyle !== 'undefined' ? artStyle : 'Unknown'); const cType = typeof assetType !== 'undefined' ? assetType : 'Asset'; saveToGallery(cPrompt, cStyle, cType, url); }).catch(err => { console.error('Cloudinary upload error:', err.message); const fallbackName = 'fallback_' + Date.now() + '.png'; const fallbackPath = require('path').join(__dirname, 'output', fallbackName); fs.writeFileSync(fallbackPath, Buffer.from(response.data)); saveToGallery(typeof prompt !== 'undefined' ? prompt : (typeof subject !== 'undefined' ? subject : 'Asset'), typeof style !== 'undefined' ? style : (typeof artStyle !== 'undefined' ? artStyle : 'Unknown'), typeof assetType !== 'undefined' ? assetType : 'Asset', (process.env.RENDER ? 'https://mindxasset.onrender.com' : 'http://localhost:5000') + '/output/' + fallbackName); });
 
-    // Upload nền lên Cloudinary
-    uploadToCloudinary(Buffer.from(response.data)).then(url => { const cPrompt = typeof prompt !== 'undefined' ? prompt : (typeof subject !== 'undefined' ? subject : 'Asset'); const cStyle = typeof style !== 'undefined' ? style : (typeof artStyle !== 'undefined' ? artStyle : 'Unknown'); const cType = typeof assetType !== 'undefined' ? assetType : 'Asset'; saveToGallery(cPrompt, cStyle, cType, url); }).catch(err => { console.error('Cloudinary upload error:', err.message); const fallbackName = 'fallback_' + Date.now() + '.png'; const fallbackPath = require('path').join(__dirname, 'output', fallbackName); fs.writeFileSync(fallbackPath, Buffer.from(response.data)); saveToGallery(typeof prompt !== 'undefined' ? prompt : (typeof subject !== 'undefined' ? subject : 'Asset'), typeof style !== 'undefined' ? style : (typeof artStyle !== 'undefined' ? artStyle : 'Unknown'), typeof assetType !== 'undefined' ? assetType : 'Asset', (process.env.RENDER ? 'https://mindxasset.onrender.com' : 'http://localhost:5000') + '/output/' + fallbackName); });
+
+
 
     try {
       const image = await Jimp.read(Buffer.from(response.data));
@@ -453,8 +453,8 @@ app.post('/api/generate-tileset', async (req, res) => {
     const zip = new AdmZip();
     zip.addLocalFile(fullSheetPath);
 
-    // Upload lên Cloudinary
-    uploadToCloudinary(Buffer.from(response.data)).then(url => { const cPrompt = typeof prompt !== 'undefined' ? prompt : (typeof subject !== 'undefined' ? subject : 'Asset'); const cStyle = typeof style !== 'undefined' ? style : (typeof artStyle !== 'undefined' ? artStyle : 'Unknown'); const cType = typeof assetType !== 'undefined' ? assetType : 'Asset'; saveToGallery(cPrompt, cStyle, cType, url); }).catch(err => { console.error('Cloudinary upload error:', err.message); const fallbackName = 'fallback_' + Date.now() + '.png'; const fallbackPath = require('path').join(__dirname, 'output', fallbackName); fs.writeFileSync(fallbackPath, Buffer.from(response.data)); saveToGallery(typeof prompt !== 'undefined' ? prompt : (typeof subject !== 'undefined' ? subject : 'Asset'), typeof style !== 'undefined' ? style : (typeof artStyle !== 'undefined' ? artStyle : 'Unknown'), typeof assetType !== 'undefined' ? assetType : 'Asset', (process.env.RENDER ? 'https://mindxasset.onrender.com' : 'http://localhost:5000') + '/output/' + fallbackName); });
+
+
     
     try {
       const image = await Jimp.read(Buffer.from(response.data));
