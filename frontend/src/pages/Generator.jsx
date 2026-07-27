@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SpritePreviewModal from '../components/SpritePreviewModal';
 
 const Generator = () => {
   const [prompt, setPrompt] = useState('');
@@ -25,15 +26,33 @@ const Generator = () => {
   const [zipUrl, setZipUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // Tự động điều chỉnh các tuỳ chọn mặc định khi đổi Model để tránh lỗi UI
   useEffect(() => {
     if (model === 'ai_team') {
-      if (!['background', 'sprite', 'pixel', 'tilesheet', 'tileset'].includes(aiTeamAssetType)) {
-        setAiTeamAssetType('sprite');
+      if (!['background', 'character', 'item', 'pixel', 'tilesheet', 'tileset'].includes(aiTeamAssetType)) {
+        setAiTeamAssetType('character');
       }
     }
   }, [model, aiTeamAssetType]);
+
+  // Quick Select Logic (Góp ý từ team)
+  useEffect(() => {
+    if (model === 'ai_team') {
+      if (aiTeamAssetType === 'item') {
+        setRatio('1:1');
+      } else if (aiTeamAssetType === 'character') {
+        setRatio('1:1');
+        setAiTeamSpritePose('idle');
+      }
+    } else {
+      if (assetType === 'Prop/Item') {
+        setRatio('1:1');
+      }
+    }
+  }, [model, aiTeamAssetType, assetType]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -71,11 +90,13 @@ const Generator = () => {
             time_of_day: timeOfDay,
             seed: -1
           };
-        } else if (aiTeamAssetType === 'sprite' || aiTeamAssetType === 'pixel') {
+        } else if (aiTeamAssetType === 'character' || aiTeamAssetType === 'item' || aiTeamAssetType === 'pixel') {
           endpoint = `${baseUrl}/api/generate-sprite`;
           let finalPrompt = prompt;
-          if (aiTeamAssetType === 'sprite') {
+          if (aiTeamAssetType === 'character') {
             finalPrompt += ` pose: ${aiTeamSpritePose}`;
+          } else if (aiTeamAssetType === 'item') {
+            finalPrompt += ` game item asset`;
           } else if (aiTeamAssetType === 'pixel') {
             finalPrompt += ` color palette: ${aiTeamPixelPalette} limited colors`;
           }
@@ -242,7 +263,8 @@ const Generator = () => {
                   onChange={(e) => setAiTeamAssetType(e.target.value)}
                 >
                   <option value="background">Cảnh quan</option>
-                  <option value="sprite">Nhân vật / Vật phẩm</option>
+                  <option value="character">Nhân vật (Character)</option>
+                  <option value="item">Vật phẩm (Item/Prop)</option>
                   <option value="pixel">Ép Pixel Art</option>
                   <option value="tilesheet">Hoạt ảnh (Tilesheet)</option>
                   <option value="tileset">Gạch môi trường (Tileset)</option>
@@ -303,7 +325,7 @@ const Generator = () => {
                 value={ratio}
                 onChange={(e) => setRatio(e.target.value)}
               >
-                {model === 'ai_team' && (aiTeamAssetType === 'sprite' || aiTeamAssetType === 'pixel') ? (
+                {model === 'ai_team' && (aiTeamAssetType === 'character' || aiTeamAssetType === 'item' || aiTeamAssetType === 'pixel') ? (
                   <>
                     <option value="1:1">64x64 px (Chuẩn)</option>
                     <option value="16:9">128x128 px (Lớn)</option>
@@ -367,7 +389,7 @@ const Generator = () => {
                 </div>
               )}
               
-              {aiTeamAssetType === 'sprite' && (
+              {aiTeamAssetType === 'character' && (
                 <div className="grid grid-cols-1 gap-3">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-gray-700">Tư thế (Pose)</label>
@@ -480,8 +502,21 @@ const Generator = () => {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Tải xuống ZIP (Đã chia Frame/Tile)
+                Tải xuống ZIP
               </a>
+            )}
+            
+            {imageResult && model === 'ai_team' && (aiTeamAssetType === 'character' || aiTeamAssetType === 'tilesheet' || aiTeamAssetType === 'tileset') && (
+              <button 
+                onClick={() => setShowPreviewModal(true)}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Cắt & Xem Trước
+              </button>
             )}
           </div>
         </div>
@@ -516,6 +551,14 @@ const Generator = () => {
           )}
         </div>
       </section>
+
+      {/* Modal */}
+      {showPreviewModal && imageResult && (
+        <SpritePreviewModal 
+          imageUrl={imageResult} 
+          onClose={() => setShowPreviewModal(false)} 
+        />
+      )}
     </div>
   );
 };
