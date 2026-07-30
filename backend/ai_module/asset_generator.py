@@ -643,7 +643,14 @@ class AssetPostProcessor:
     @staticmethod
     def remove_background(img: Image.Image, threshold: int = 245) -> Image.Image:
         """Remove background. Use rembg if installed; otherwise fall back to near-white removal."""
+        import os
         img = img.convert("RGBA")
+        
+        # Free Render instances (512MB RAM) will OOM when loading onnxruntime (used by rembg).
+        # We bypass rembg entirely and use the lightweight fallback if we detect the RENDER env var.
+        if os.getenv("RENDER") or os.getenv("DISABLE_REMBG") == "true":
+            return AssetPostProcessor.remove_near_white_background(img, threshold=threshold)
+            
         try:
             from rembg import remove, new_session
             import sys
