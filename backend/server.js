@@ -89,8 +89,19 @@ const runPythonCLI = (res, args, cleanupPath = null) => {
     }
     
     if (error) {
-      console.error('Python Error:', stderr || error.message);
-      return res.status(500).json({ error: 'Lỗi AI module: ' + (stderr || error.message) });
+      const errText = stderr || error.message || '';
+      console.error('Python Error:', errText);
+      
+      let friendlyError = 'Lỗi AI module: ' + errText;
+      if (errText.includes('429 Client Error') || errText.includes('Too Many Requests')) {
+        friendlyError = 'Lỗi: Máy chủ AI đang quá tải hoặc API Key của bạn đã hết lượt/bị giới hạn. Vui lòng kiểm tra lại API Key hoặc thử lại sau.';
+      } else if (errText.includes('402 Client Error') || errText.includes('Payment Required')) {
+        friendlyError = 'Lỗi: API Key của bạn đã hết credits (Pollen). Vui lòng nạp thêm hoặc đổi Key mới.';
+      } else if (errText.includes('401 Client Error') || errText.includes('Unauthorized')) {
+        friendlyError = 'Lỗi: API Key không hợp lệ hoặc chưa được cấu hình đúng.';
+      }
+      
+      return res.status(500).json({ error: friendlyError });
     }
     
     try {
