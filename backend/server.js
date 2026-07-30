@@ -11,8 +11,10 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
-
 const upload = multer({ dest: 'uploads/' });
+
+// Serve output directory for local fallback images
+app.use('/output', express.static(path.join(__dirname, 'output')));
 
 // Helper Cloudinary fallback mechanism
 // We upload to cloudinary in background. If it fails, we use local URL.
@@ -101,9 +103,10 @@ const runPythonCLI = (res, args, cleanupPath = null) => {
       const relativePath = path.relative(__dirname, filePath).replace(/\\/g, '/');
       
       // Upload to cloudinary async
+      const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
       uploadToCloudinary(buffer)
         .then(url => saveToGallery(data.prompt, args.includes('--style') ? args[args.indexOf('--style')+1] : '', data.asset_type, url))
-        .catch(err => saveToGallery(data.prompt, '', data.asset_type, `http://localhost:5000/${relativePath}`));
+        .catch(err => saveToGallery(data.prompt, '', data.asset_type, `${baseUrl}/${relativePath}`));
 
       res.json({ 
         image: dataUri, 
