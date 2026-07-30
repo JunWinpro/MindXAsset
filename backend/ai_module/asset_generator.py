@@ -645,10 +645,15 @@ class AssetPostProcessor:
         """Remove background. Use rembg if installed; otherwise fall back to near-white removal."""
         img = img.convert("RGBA")
         try:
-            from rembg import remove  # type: ignore
-
-            return remove(img).convert("RGBA")
-        except Exception:
+            from rembg import remove, new_session
+            import sys
+            
+            # Use lightweight model to prevent Out Of Memory (OOM) on free Render instances
+            session = new_session("u2netp")
+            return remove(img, session=session).convert("RGBA")
+        except Exception as e:
+            import sys
+            print(f"Warning: rembg failed ({e}), falling back to near-white removal", file=sys.stderr)
             return AssetPostProcessor.remove_near_white_background(img, threshold=threshold)
 
     @staticmethod

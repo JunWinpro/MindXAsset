@@ -99,6 +99,8 @@ const runPythonCLI = (res, args, cleanupPath = null) => {
         friendlyError = 'Lỗi: API Key của bạn đã hết credits (Pollen). Vui lòng nạp thêm hoặc đổi Key mới.';
       } else if (errText.includes('401 Client Error') || errText.includes('Unauthorized')) {
         friendlyError = 'Lỗi: API Key không hợp lệ hoặc chưa được cấu hình đúng.';
+      } else if (!stderr && error.message && error.message.includes('Command failed')) {
+        friendlyError = 'Lỗi hệ thống: Máy chủ xử lý ảnh bị quá tải bộ nhớ (Out Of Memory). Lỗi này thường xảy ra khi Render bị cạn RAM. Vui lòng thử lại sau.';
       }
       
       return res.status(500).json({ error: friendlyError });
