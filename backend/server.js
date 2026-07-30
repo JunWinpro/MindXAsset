@@ -72,7 +72,14 @@ app.get('/api/gallery', (req, res) => {
 // Common python runner
 const runPythonCLI = (res, args, cleanupPath = null) => {
   const pythonScript = path.join(__dirname, 'ai_module', 'cli.py');
-  const pythonExecutable = path.join(__dirname, 'ai_module', 'venv', 'Scripts', 'python.exe');
+  
+  let pythonExecutable;
+  if (process.platform === 'win32') {
+    pythonExecutable = path.join(__dirname, 'ai_module', 'venv', 'Scripts', 'python.exe');
+  } else {
+    const linuxVenvPath = path.join(__dirname, 'ai_module', 'venv', 'bin', 'python');
+    pythonExecutable = fs.existsSync(linuxVenvPath) ? linuxVenvPath : 'python3';
+  }
   
   execFile(pythonExecutable, [pythonScript, ...args], { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
     if (cleanupPath) {
