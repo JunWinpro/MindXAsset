@@ -4,6 +4,8 @@ import Header from './components/layout/Header';
 import Home from './pages/Home';
 import Generator from './pages/Generator';
 import Gallery from './pages/Gallery';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
@@ -15,6 +17,7 @@ function App() {
           <Route path="/generator" element={<Generator />} />
           <Route path="/gallery" element={<Gallery />} />
         </Routes>
+        <ToastContainer position="bottom-right" />
       </div>
     </Router>
   );

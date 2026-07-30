@@ -1,5 +1,85 @@
 [
   {
+    "id": "1785430516346",
+    "prompt": "From Image",
+    "style": "Anime",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/sprites/sprite_from_767439e74e9aee964b73e935d5704698_64x64.png",
+    "created_at": "2026-07-30T16:55:16.346Z"
+  },
+  {
+    "id": "1785428820702",
+    "prompt": "nice guy color palette: monochrome limited colors",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/pixel_art/pixel_nice_guy_color_palette__monochrome_limited_colors_128x128.png",
+    "created_at": "2026-07-30T16:27:00.702Z"
+  },
+  {
+    "id": "1785428466382",
+    "prompt": "a mouse",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/pixel_art/pixel_a_mouse_128x128.png",
+    "created_at": "2026-07-30T16:21:06.382Z"
+  },
+  {
+    "id": "1785428354117",
+    "prompt": "a cat",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/pixel_art/pixel_a_cat_64x64.png",
+    "created_at": "2026-07-30T16:19:14.117Z"
+  },
+  {
+    "id": "1785385096033",
+    "prompt": "a mouse color palette: monochrome limited colors",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/pixel_a_mouse_color_palette__monochrome_limited_colors_128x128.png",
+    "created_at": "2026-07-30T04:18:16.033Z"
+  },
+  {
+    "id": "1785385050327",
+    "prompt": "a mouse color palette: monochrome limited colors",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/pixel_a_mouse_color_palette__monochrome_limited_colors_128x128.png",
+    "created_at": "2026-07-30T04:17:30.327Z"
+  },
+  {
+    "id": "1785384906583",
+    "prompt": "a mouse color palette: monochrome limited colors",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/pixel_a_mouse_color_palette__monochrome_limited_colors_128x128.png",
+    "created_at": "2026-07-30T04:15:06.583Z"
+  },
+  {
+    "id": "1785384861390",
+    "prompt": "a mouse color palette: monochrome limited colors",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/pixel_a_mouse_color_palette__monochrome_limited_colors_128x128.png",
+    "created_at": "2026-07-30T04:14:21.390Z"
+  },
+  {
+    "id": "1785383737842",
+    "prompt": "a dog pose: idle",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/sprites/sprite_1785383735907.png",
+    "created_at": "2026-07-30T03:55:37.842Z"
+  },
+  {
+    "id": "1785383223492",
+    "prompt": "a cat",
+    "style": "Pixel Art",
+    "type": "Character",
+    "image_url": "http://localhost:5000/output/fallback_1785383223483.png",
+    "created_at": "2026-07-30T03:47:03.492Z"
+  },
+  {
     "id": "1785162712797",
     "prompt": "a horse",
     "style": "Pixel Art",

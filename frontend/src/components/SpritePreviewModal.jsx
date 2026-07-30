@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const SpritePreviewModal = ({ imageUrl, onClose }) => {
+const SpritePreviewModal = ({ isOpen, imageUrl, metadata, onClose }) => {
   const [columns, setColumns] = useState(1);
   const [rows, setRows] = useState(1);
   const [fps, setFps] = useState(10);
@@ -9,6 +9,13 @@ const SpritePreviewModal = ({ imageUrl, onClose }) => {
   
   const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
   const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (metadata) {
+      if (metadata.columns) setColumns(metadata.columns);
+      if (metadata.rows) setRows(metadata.rows);
+    }
+  }, [metadata]);
 
   useEffect(() => {
     if (imageUrl) {
@@ -49,6 +56,8 @@ const SpritePreviewModal = ({ imageUrl, onClose }) => {
       );
     }
   }
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 lg:p-8">
