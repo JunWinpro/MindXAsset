@@ -13,6 +13,16 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
   const [cols, setCols] = useState(1);
   const [rows, setRows] = useState(1);
 
+  const BACKGROUNDS = [
+    { id: 'transparent', name: 'Trong suốt (Caro)', value: 'url("https://www.transparenttextures.com/patterns/cubes.png")', className: 'bg-gray-200' },
+    { id: 'black', name: 'Nền đen', value: 'none', className: 'bg-black' },
+    { id: 'white', name: 'Nền trắng', value: 'none', className: 'bg-white' },
+    { id: 'green', name: 'Màn hình xanh', value: 'none', className: 'bg-[#00b140]' },
+    { id: 'forest', name: 'Khu rừng', value: 'url("https://img.freepik.com/free-vector/pixel-art-rural-landscape_24908-61882.jpg")', className: 'bg-cover bg-center' },
+    { id: 'dungeon', name: 'Hầm ngục', value: 'url("https://img.freepik.com/free-vector/dungeon-game-background-with-cave-pillars_107791-5369.jpg")', className: 'bg-cover bg-center' },
+  ];
+  const [previewBg, setPreviewBg] = useState(BACKGROUNDS[0]);
+
   // If AI provided frames, use them. Otherwise, let user slice manually.
   const isAutoSlice = frames && frames.length > 0;
 
@@ -169,8 +179,25 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
         </div>
       </div>
 
-      <div className="flex justify-center items-center bg-[url('https://t3.ftcdn.net/jpg/03/76/74/78/360_F_376747823_L8il80K6cKQcbGAEHTk2vwE4h3sJ7m2l.jpg')] bg-repeat rounded-lg border border-gray-300 overflow-hidden relative min-h-[128px]">
-        <canvas ref={canvasRef} className="max-w-full max-h-48 object-contain" style={{ imageRendering: 'pixelated' }} />
+      {/* Background Selector */}
+      <div className="flex gap-2 overflow-x-auto pb-1 items-center">
+        <span className="text-sm font-medium text-gray-700 whitespace-nowrap mr-1">Nền:</span>
+        {BACKGROUNDS.map(bg => (
+          <button
+            key={bg.id}
+            onClick={() => setPreviewBg(bg)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${previewBg.id === bg.id ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'} transition-all whitespace-nowrap`}
+          >
+            {bg.name}
+          </button>
+        ))}
+      </div>
+
+      <div 
+        className={`flex justify-center items-center rounded-lg border border-gray-300 overflow-hidden relative min-h-[128px] ${previewBg.className}`}
+        style={{ backgroundImage: previewBg.value }}
+      >
+        <canvas ref={canvasRef} className="max-w-full max-h-48 object-contain relative z-10" style={{ imageRendering: 'pixelated' }} />
       </div>
 
       <div className="flex flex-col gap-3 text-sm text-gray-700">

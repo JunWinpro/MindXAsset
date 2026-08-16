@@ -7,6 +7,15 @@ const SpritePreviewModal = ({ isOpen, imageUrl, metadata, onClose }) => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentFrame, setCurrentFrame] = useState(0);
   
+  const BACKGROUNDS = [
+    { id: 'transparent', name: 'Trong suốt (Caro)', value: 'url("https://www.transparenttextures.com/patterns/cubes.png")', className: 'bg-gray-200' },
+    { id: 'black', name: 'Nền đen', value: 'none', className: 'bg-black' },
+    { id: 'white', name: 'Nền trắng', value: 'none', className: 'bg-white' },
+    { id: 'green', name: 'Màn hình xanh', value: 'none', className: 'bg-[#00b140]' },
+    { id: 'forest', name: 'Khu rừng', value: 'url("https://img.freepik.com/free-vector/pixel-art-rural-landscape_24908-61882.jpg")', className: 'bg-cover bg-center' },
+  ];
+  const [previewBg, setPreviewBg] = useState(BACKGROUNDS[0]);
+
   const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
   const containerRef = useRef(null);
 
@@ -121,10 +130,27 @@ const SpritePreviewModal = ({ isOpen, imageUrl, metadata, onClose }) => {
               Xem trước hoạt ảnh (Preview)
             </h3>
 
-            <div className="flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-gray-200 rounded-xl border-2 border-gray-300 p-4 flex flex-col items-center justify-center min-h-[300px] shadow-inner">
+            {/* Background Selector */}
+            <div className="flex gap-2 overflow-x-auto pb-1 items-center">
+              <span className="text-sm font-medium text-gray-700 whitespace-nowrap mr-1">Nền:</span>
+              {BACKGROUNDS.map(bg => (
+                <button
+                  key={bg.id}
+                  onClick={() => setPreviewBg(bg)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${previewBg.id === bg.id ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'} transition-all whitespace-nowrap`}
+                >
+                  {bg.name}
+                </button>
+              ))}
+            </div>
+
+            <div 
+              className={`flex-1 rounded-xl border-2 border-gray-300 p-4 flex flex-col items-center justify-center min-h-[300px] shadow-inner overflow-hidden relative ${previewBg.className}`}
+              style={{ backgroundImage: previewBg.value }}
+            >
               {imgSize.width > 0 && columns > 0 && rows > 0 ? (
                 <div 
-                  className="overflow-hidden"
+                  className="overflow-hidden relative z-10"
                   style={{ 
                     width: `${frameWidth}px`, 
                     height: `${frameHeight}px`,
@@ -151,7 +177,7 @@ const SpritePreviewModal = ({ isOpen, imageUrl, metadata, onClose }) => {
                   />
                 </div>
               ) : (
-                <p className="text-gray-500">Đang tải...</p>
+                <p className="text-gray-500 relative z-10">Đang tải...</p>
               )}
             </div>
 
