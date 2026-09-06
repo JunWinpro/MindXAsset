@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 export default function AnimationPreview({ imageUrl, frames = [], layoutFormat = 'single' }) {
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
+  const bgInputRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeed] = useState(100); // ms per frame
   const [currentFrame, setCurrentFrame] = useState(0);
@@ -13,15 +14,17 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
   const [manualCols, setManualCols] = useState(1);
   const [manualRows, setManualRows] = useState(1);
 
+  // ── Built-in safe backgrounds (no external Freepik URLs) ──
   const BACKGROUNDS = [
-    { id: 'transparent', name: 'Trong suốt (Caro)', value: 'url("https://www.transparenttextures.com/patterns/cubes.png")', className: 'bg-gray-200' },
-    { id: 'black', name: 'Nền đen', value: 'none', className: 'bg-black' },
-    { id: 'white', name: 'Nền trắng', value: 'none', className: 'bg-white' },
-    { id: 'green', name: 'Màn hình xanh', value: 'none', className: 'bg-[#00b140]' },
-    { id: 'forest', name: 'Khu rừng', value: 'url("https://img.freepik.com/free-vector/pixel-art-rural-landscape_24908-61882.jpg")', className: 'bg-cover bg-center' },
-    { id: 'dungeon', name: 'Hầm ngục', value: 'url("https://img.freepik.com/free-vector/dungeon-game-background-with-cave-pillars_107791-5369.jpg")', className: 'bg-cover bg-center' },
+    { id: 'transparent', name: 'Trong suốt (Caro)', style: {}, className: 'bg-gray-200 bg-[length:16px_16px] bg-[linear-gradient(45deg,#ccc_25%,transparent_25%,transparent_75%,#ccc_75%,#ccc),linear-gradient(45deg,#ccc_25%,transparent_25%,transparent_75%,#ccc_75%,#ccc)] bg-[position:0_0,8px_8px]' },
+    { id: 'black', name: 'Nền đen', style: {}, className: 'bg-black' },
+    { id: 'white', name: 'Nền trắng', style: {}, className: 'bg-white border-gray-300' },
+    { id: 'green', name: 'Màn hình xanh', style: {}, className: 'bg-[#00b140]' },
   ];
+
   const [previewBg, setPreviewBg] = useState(BACKGROUNDS[0]);
+  const [customBgUrl, setCustomBgUrl] = useState(null);
+  const [useCustomBg, setUseCustomBg] = useState(false);
 
   // If AI provided frames, use them. Otherwise, let user slice manually.
   const isAutoSlice = Array.isArray(frames) && frames.length > 0;
@@ -116,6 +119,41 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
     ctx.drawImage(img, frameX, frameY, frameW, frameH, 0, 0, frameW, frameH);
   }, [currentFrame, cols, rows, frames, isAutoSlice, imageUrl]);
 
+  // ── User uploads their own background ──
+  const handleBgUpload = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        toast.error('Vui lòng chọn file ảnh nền hợp lệ.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCustomBgUrl(reader.result);
+        setUseCustomBg(true);
+        setPreviewBg(null);
+        toast.success('Đã tải nền tùy chỉnh!');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const selectBuiltinBg = (bg) => {
+    setPreviewBg(bg);
+    setUseCustomBg(false);
+  };
+
+  const clearCustomBg = () => {
+    setCustomBgUrl(null);
+    setUseCustomBg(false);
+    setPreviewBg(BACKGROUNDS[0]);
+    if (bgInputRef.current) bgInputRef.current.value = '';
+  };
+
+  // ── Compute background className + style for the preview container ──
+  const bgClassName = useCustomBg ? 'bg-cover bg-center bg-no-repeat' : (previewBg?.className || '');
+  const bgStyle = useCustomBg && customBgUrl ? { backgroundImage: `url("${customBgUrl}")` } : {};
+
   const handleDownloadZip = async () => {
     const img = imageRef.current;
     if (!img) return;
@@ -193,23 +231,60 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
         </div>
       </div>
 
-      {/* Background Selector */}
-      <div className="flex gap-2 overflow-x-auto pb-1 items-center">
+      {/* ── Background Selector ── */}
+      <div className="flex gap-2 overflow-x-auto pb-1 items-center flex-wrap">
         <span className="text-sm font-medium text-gray-700 whitespace-nowrap mr-1">Nền:</span>
         {BACKGROUNDS.map(bg => (
           <button
             key={bg.id}
-            onClick={() => setPreviewBg(bg)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${previewBg.id === bg.id ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'} transition-all whitespace-nowrap`}
+            onClick={() => selectBuiltinBg(bg)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all whitespace-nowrap ${
+              !useCustomBg && previewBg?.id === bg.id 
+                ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+            }`}
           >
             {bg.name}
           </button>
         ))}
+        
+        {/* ── Upload custom background ── */}
+        <button
+          onClick={() => bgInputRef.current?.click()}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all whitespace-nowrap flex items-center gap-1 ${
+            useCustomBg 
+              ? 'border-blue-500 bg-blue-50 text-blue-700' 
+              : 'border-dashed border-gray-300 bg-white text-gray-500 hover:border-blue-400 hover:text-blue-600'
+          }`}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+          {useCustomBg ? 'Đã tải nền' : 'Tải nền của bạn'}
+        </button>
+        <input 
+          ref={bgInputRef}
+          type="file" 
+          accept="image/*" 
+          onChange={handleBgUpload} 
+          className="hidden" 
+        />
+
+        {useCustomBg && (
+          <button
+            onClick={clearCustomBg}
+            className="px-2 py-1.5 rounded-lg text-xs font-medium border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-all whitespace-nowrap"
+            title="Xóa nền tùy chỉnh"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
+      {/* ── Canvas preview ── */}
       <div 
-        className={`flex justify-center items-center rounded-lg border border-gray-300 overflow-hidden relative min-h-[128px] ${previewBg.className}`}
-        style={{ backgroundImage: previewBg.value }}
+        className={`flex justify-center items-center rounded-lg border border-gray-300 overflow-hidden relative min-h-[128px] ${bgClassName}`}
+        style={bgStyle}
       >
         <canvas ref={canvasRef} className="max-w-full max-h-48 object-contain relative z-10" style={{ imageRendering: 'pixelated' }} />
       </div>
@@ -237,7 +312,7 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
                 min="1" 
                 value={manualCols} 
                 onChange={(e) => setManualCols(Math.max(1, parseInt(e.target.value) || 1))} 
-                className="w-full bg-white border border-gray-300 rounded-md px-2 py-1 outline-none focus:border-red-500 transition"
+                className="w-full bg-white border border-gray-300 rounded-md px-2 py-1 outline-none focus:border-blue-500 transition"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -247,7 +322,7 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
                 min="1" 
                 value={manualRows} 
                 onChange={(e) => setManualRows(Math.max(1, parseInt(e.target.value) || 1))} 
-                className="w-full bg-white border border-gray-300 rounded-md px-2 py-1 outline-none focus:border-red-500 transition"
+                className="w-full bg-white border border-gray-300 rounded-md px-2 py-1 outline-none focus:border-blue-500 transition"
               />
             </div>
           </div>

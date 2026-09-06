@@ -56,7 +56,7 @@ const Gallery = () => {
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
           {items.map((item) => (
             <div key={item.id} className="break-inside-avoid bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
-              <div className="relative overflow-hidden bg-gray-50 flex items-center justify-center min-h-[150px]">
+              <div className="relative overflow-hidden bg-gray-50 flex items-center justify-center min-h-[150px] max-h-[400px]">
                 <img 
                   src={item.image_url} 
                   alt={item.prompt} 
@@ -72,9 +72,11 @@ const Gallery = () => {
                 </div>
               </div>
               <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="px-2.5 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-lg uppercase tracking-wider">{item.type}</span>
-                  <span className="px-2.5 py-1 bg-gray-50 text-gray-600 text-xs font-medium rounded-lg">{item.style}</span>
+                  {item.style && item.style !== 'N/A' && (
+                    <span className="px-2.5 py-1 bg-gray-50 text-gray-600 text-xs font-medium rounded-lg">{item.style}</span>
+                  )}
                 </div>
                 <p className="text-gray-800 text-sm font-medium line-clamp-3 mb-3 leading-relaxed" title={item.prompt}>
                   {item.prompt}

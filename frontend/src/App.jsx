@@ -16,7 +16,7 @@ function App() {
           <Route path="/generator" element={<Generator />} />
           <Route path="/gallery" element={<Gallery />} />
         </Routes>
-        <ToastContainer position="bottom-right" />
+        <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
       </div>
     </Router>
   );
