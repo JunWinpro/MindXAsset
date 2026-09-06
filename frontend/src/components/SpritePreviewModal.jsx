@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const SpritePreviewModal = ({ isOpen, imageUrl, metadata, onClose }) => {
-  const [columns, setColumns] = useState(1);
-  const [rows, setRows] = useState(1);
+  const [columns, setColumns] = useState(metadata?.columns || 1);
+  const [rows, setRows] = useState(metadata?.rows || 1);
+  const [prevMetadata, setPrevMetadata] = useState(metadata);
   const [fps, setFps] = useState(10);
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentFrame, setCurrentFrame] = useState(0);
@@ -19,12 +20,11 @@ const SpritePreviewModal = ({ isOpen, imageUrl, metadata, onClose }) => {
   const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
   const containerRef = useRef(null);
 
-  useEffect(() => {
-    if (metadata) {
-      if (metadata.columns) setColumns(metadata.columns);
-      if (metadata.rows) setRows(metadata.rows);
-    }
-  }, [metadata]);
+  if (metadata !== prevMetadata) {
+    setPrevMetadata(metadata);
+    if (metadata?.columns) setColumns(metadata.columns);
+    if (metadata?.rows) setRows(metadata.rows);
+  }
 
   useEffect(() => {
     if (imageUrl) {

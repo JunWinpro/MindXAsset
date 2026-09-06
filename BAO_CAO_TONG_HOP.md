@@ -126,21 +126,37 @@ Hiện tại, khi team AI chỉ trả về một bức ảnh to (Image) duy nh�
 Tài liệu này hướng dẫn chi tiết cách tái tạo lại toàn bộ dự án từ con số 0. Dự án được thiết kế với giao diện chuẩn MindX (Trắng, Đỏ, Đen), tối ưu hiệu năng và cấu trúc linh hoạt để hỗ trợ gọi đa mô hình AI.
 
 ### 1. Cấu Trúc Tổng Quan
-Dự án được chia làm 3 phần chính và định hướng nâng cấp lên Python FastAPI:
+Dự án được chuẩn hóa kiến trúc sử dụng Node.js Express làm máy chủ API trung tâm kết nối với AI Engine:
 1. **Frontend**: Ứng dụng ReactJS sử dụng Vite và TailwindCSS.
-2. **Backend (Node.js)**: Máy chủ ExpressJS nhẹ để xử lý API nhanh.
-3. **Backend (Spring Boot)**: Máy chủ Java mạnh mẽ để quản lý logic.
-4. **Backend (Python FastAPI) - Đề xuất Kiến trúc mới**: Giải pháp tối ưu thay thế Node.js/Java để chạy các mô hình AI/Deep Learning native.
+2. **Backend Chính Thức (Node.js Express)**: Máy chủ API duy nhất phục vụ toàn bộ chức năng giao diện (`backend/server.js`, port 5000), tích hợp với Python CLI module (`ai_module`).
+3. **Module Tham Khảo (Không chạy song song)**:
+   - `springboot-backend`: Bản thiết kế Java Spring Boot mẫu (cấu hình port 8080 nếu chạy độc lập).
+   - `python-backend`: Bản thiết kế đề xuất FastAPI cho giai đoạn mở rộng microservices trong tương lai.
 
 ### 2. Frontend (React + Vite + TailwindCSS)
 Giao diện Light Mode, màu chủ đạo Đỏ (MindX) / Trắng / Đen. Giao diện này cung cấp các tuỳ chọn: Ý tưởng, Mô hình (Hugging Face, Gemini, Pollinations), Loại Asset, Phong cách, Góc nhìn, và Tách nền.
 
-### 3. Hướng Dẫn Kiến Trúc Đề Xuất (Tương lai): Python FastAPI
-Tạo file `main.py` để thay thế dần Node.js và Java trong giai đoạn 2 của dự án.
-Sử dụng `uvicorn main:app --reload --port 5000` để chạy server.
+### 3. Cấu Hình Biến Môi Trường (Backend)
+Sao chép file mẫu và điền API Keys trước khi chạy:
+```bash
+cd backend
+cp .env.example .env
+# Chỉnh sửa file .env với API Key thật (POLLINATIONS_API_KEY, HUGGINGFACE_API_KEY, CLOUDINARY_*)
+```
 
-### 4. Tổng Kết và Chạy Ứng Dụng (Demo)
-1. **Frontend**: `cd frontend && npm run dev`
-2. **Backend (Node.js)**: `cd backend && node server.js`
-3. **Backend (Spring Boot)**: `cd springboot-backend && ./mvnw spring-boot:run`
-Truy cập vào trình duyệt (`http://localhost:5173`) để sử dụng giao diện Light Mode hoàn chỉnh.
+### 4. Khởi Chạy Ứng Dụng (Standard Execution)
+Chỉ cần khởi chạy 2 tiến trình sau:
+1. **Backend (Node.js)**:
+   ```bash
+   cd backend
+   node server.js
+   ```
+   *(Backend chạy tại `http://localhost:5000`)*
+
+2. **Frontend (React Vite)**:
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+   *(Truy cập `http://localhost:5173` trên trình duyệt để sử dụng đầy đủ các chức năng).*
+

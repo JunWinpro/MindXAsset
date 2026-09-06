@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Gallery = () => {
   const [items, setItems] = useState([]);
@@ -9,11 +10,12 @@ const Gallery = () => {
   useEffect(() => {
     const fetchGallery = async () => {
       try {
-        const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://mindxasset.onrender.com';
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://mindxasset.onrender.com');
         const res = await axios.get(`${baseUrl}/api/gallery`);
         setItems(res.data);
       } catch (err) {
         console.error('Lỗi khi tải thư viện:', err);
+        toast.error('Không thể kết nối đến máy chủ thư viện ảnh.');
       } finally {
         setLoading(false);
       }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import SpritePreviewModal from '../components/SpritePreviewModal';
 import AnimationPreview from '../components/AnimationPreview';
 import { toast } from 'react-toastify';
@@ -11,7 +11,6 @@ const Generator = () => {
   const [ratio, setRatio] = useState('1:1');
   const [customWidth, setCustomWidth] = useState(512);
   const [customHeight, setCustomHeight] = useState(512);
-  const [transparent, setTransparent] = useState(true);
 
   // Background specific
   const [timeOfDay, setTimeOfDay] = useState('day');
@@ -19,15 +18,11 @@ const Generator = () => {
   // Tilesheet specific
   const [action, setAction] = useState('running');
   const [frames, setFrames] = useState(10);
-  const [frameWidth, setFrameWidth] = useState(64);
-  const [frameHeight, setFrameHeight] = useState(64);
 
   // Tileset specific
   const [tiles, setTiles] = useState('');
   const [columns, setColumns] = useState(8);
   const [cellSize, setCellSize] = useState('64x64');
-  const [margin, setMargin] = useState(0);
-  const [spacing, setSpacing] = useState(1);
 
   // Pixel/From Image specific
   const [blockSize, setBlockSize] = useState(8);
@@ -38,16 +33,14 @@ const Generator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [imageResult, setImageResult] = useState(null);
   const [generationTime, setGenerationTime] = useState(null);
-  const [zipUrl, setZipUrl] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-  useEffect(() => {
-    // Auto reset some options when asset type changes
+  const handleAssetTypeChange = (newType) => {
+    setAssetType(newType);
     setImageResult(null);
-    setZipUrl(null);
     setMetadata(null);
-  }, [assetType]);
+  };
 
   const handleGenerate = async () => {
     if (assetType !== 'pixel-from-image' && assetType !== 'sprite-from-image' && !prompt.trim() && !tiles.trim()) {
@@ -61,13 +54,12 @@ const Generator = () => {
 
     setIsGenerating(true);
     setImageResult(null);
-    setZipUrl(null);
     setMetadata(null);
     
     const startTime = Date.now();
 
     try {
-      const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://mindxasset.onrender.com';
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://mindxasset.onrender.com');
       let endpoint = '';
       let bodyData = null;
       let formData = null;
@@ -132,7 +124,6 @@ const Generator = () => {
       }
 
       setImageResult(data.image || `${baseUrl}/${data.file_path}`);
-      if (data.zip_url) setZipUrl(`${baseUrl}/${data.zip_url}`);
       if (data.metadata) setMetadata(data.metadata);
       
       const timeTaken = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -162,7 +153,7 @@ const Generator = () => {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700">Loại Asset</label>
-            <select className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500" value={assetType} onChange={(e) => setAssetType(e.target.value)}>
+            <select className="w-full rounded-xl bg-gray-50 border border-gray-300 text-gray-900 p-3 outline-none focus:border-red-500" value={assetType} onChange={(e) => handleAssetTypeChange(e.target.value)}>
               <option value="character">Nhân vật / Sprite</option>
               <option value="background">Cảnh quan / Background</option>
               <option value="tilesheet">Hoạt ảnh / Tilesheet</option>
@@ -408,6 +399,7 @@ const Generator = () => {
         isOpen={showPreviewModal} 
         onClose={() => setShowPreviewModal(false)} 
         imageUrl={imageResult} 
+        metadata={metadata}
       />
     </div>
   );

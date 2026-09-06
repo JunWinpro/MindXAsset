@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import JSZip from 'jszip';
 import { toast } from 'react-toastify';
 
@@ -9,9 +9,9 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
   const [speed, setSpeed] = useState(100); // ms per frame
   const [currentFrame, setCurrentFrame] = useState(0);
   
-  // Custom Slicer State
-  const [cols, setCols] = useState(1);
-  const [rows, setRows] = useState(1);
+  // Custom Manual Slicer State
+  const [manualCols, setManualCols] = useState(1);
+  const [manualRows, setManualRows] = useState(1);
 
   const BACKGROUNDS = [
     { id: 'transparent', name: 'Trong suốt (Caro)', value: 'url("https://www.transparenttextures.com/patterns/cubes.png")', className: 'bg-gray-200' },
@@ -24,17 +24,26 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
   const [previewBg, setPreviewBg] = useState(BACKGROUNDS[0]);
 
   // If AI provided frames, use them. Otherwise, let user slice manually.
-  const isAutoSlice = frames && frames.length > 0;
+  const isAutoSlice = Array.isArray(frames) && frames.length > 0;
 
-  useEffect(() => {
+  const autoCols = useMemo(() => {
     if (isAutoSlice) {
-      // Calculate cols and rows from distinct x and y coordinates
       const distinctX = new Set(frames.map(f => f.x));
-      const distinctY = new Set(frames.map(f => f.y));
-      setCols(distinctX.size);
-      setRows(distinctY.size);
+      return distinctX.size || 1;
     }
+    return 1;
   }, [frames, isAutoSlice]);
+
+  const autoRows = useMemo(() => {
+    if (isAutoSlice) {
+      const distinctY = new Set(frames.map(f => f.y));
+      return distinctY.size || 1;
+    }
+    return 1;
+  }, [frames, isAutoSlice]);
+
+  const cols = isAutoSlice ? autoCols : manualCols;
+  const rows = isAutoSlice ? autoRows : manualRows;
 
   useEffect(() => {
     const img = new Image();
@@ -42,19 +51,14 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
     img.src = imageUrl;
     img.onload = () => {
       imageRef.current = img;
-      if (!isAutoSlice) {
-        // Initial guess if no frames provided
-        setCols(1);
-        setRows(1);
-      }
     };
-  }, [imageUrl, isAutoSlice]);
+  }, [imageUrl]);
 
   // Animation Loop
   useEffect(() => {
     if (!isPlaying || !imageRef.current) return;
     
-    let totalFrames = isAutoSlice ? frames.length : (cols * rows);
+    const totalFrames = isAutoSlice ? frames.length : (cols * rows);
     if (totalFrames <= 1) return;
 
     const interval = setInterval(() => {
@@ -72,13 +76,13 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
     
     if (!ctx || !img) return;
 
-    let totalFrames = isAutoSlice ? frames.length : (cols * rows);
+    const totalFrames = isAutoSlice ? frames.length : (cols * rows);
     if (totalFrames === 0) return;
     
-    let frameX = 0;
-    let frameY = 0;
-    let frameW = img.width;
-    let frameH = img.height;
+    let frameX;
+    let frameY;
+    let frameW;
+    let frameH;
 
     if (isAutoSlice) {
       const frameData = frames[currentFrame % frames.length];
@@ -87,6 +91,11 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
         frameY = frameData.y;
         frameW = frameData.w;
         frameH = frameData.h;
+      } else {
+        frameX = 0;
+        frameY = 0;
+        frameW = img.width;
+        frameH = img.height;
       }
     } else {
       frameW = img.width / cols;
@@ -112,7 +121,7 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
     if (!img) return;
 
     const zip = new JSZip();
-    let totalFrames = isAutoSlice ? frames.length : (cols * rows);
+    const totalFrames = isAutoSlice ? frames.length : (cols * rows);
     
     // Create a temporary canvas for slicing
     const tempCanvas = document.createElement('canvas');
@@ -120,7 +129,10 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
 
     let count = 0;
     for (let i = 0; i < totalFrames; i++) {
-      let frameX = 0, frameY = 0, frameW = img.width, frameH = img.height;
+      let frameX;
+      let frameY;
+      let frameW;
+      let frameH;
       
       if (isAutoSlice) {
         const frameData = frames[i];
@@ -160,7 +172,7 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast.success(`Đã tải xuống ${count} frames thành công!`);
-    } catch (err) {
+    } catch {
       toast.error('Lỗi khi tạo file ZIP!');
     }
   };
@@ -168,7 +180,9 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-4 mt-4">
       <div className="flex items-center justify-between border-b pb-2 border-gray-200">
-        <h3 className="font-semibold text-gray-700 text-sm">Animation Preview & Slicer</h3>
+        <h3 className="font-semibold text-gray-700 text-sm">
+          Animation Preview & Slicer ({layoutFormat === 'grid' ? 'Lưới Grid' : 'Dải Ngang'})
+        </h3>
         <div className="flex gap-2">
           <button 
             onClick={() => setIsPlaying(!isPlaying)}
@@ -221,8 +235,8 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
               <input 
                 type="number" 
                 min="1" 
-                value={cols} 
-                onChange={(e) => setCols(Math.max(1, parseInt(e.target.value) || 1))} 
+                value={manualCols} 
+                onChange={(e) => setManualCols(Math.max(1, parseInt(e.target.value) || 1))} 
                 className="w-full bg-white border border-gray-300 rounded-md px-2 py-1 outline-none focus:border-red-500 transition"
               />
             </div>
@@ -231,8 +245,8 @@ export default function AnimationPreview({ imageUrl, frames = [], layoutFormat =
               <input 
                 type="number" 
                 min="1" 
-                value={rows} 
-                onChange={(e) => setRows(Math.max(1, parseInt(e.target.value) || 1))} 
+                value={manualRows} 
+                onChange={(e) => setManualRows(Math.max(1, parseInt(e.target.value) || 1))} 
                 className="w-full bg-white border border-gray-300 rounded-md px-2 py-1 outline-none focus:border-red-500 transition"
               />
             </div>
