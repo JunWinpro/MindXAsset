@@ -26,10 +26,16 @@ const Header = () => {
           Trang chủ
         </Link>
         <Link 
-          to="/generator" 
-          className={`font-medium transition-colors ${location.pathname === '/generator' ? 'text-red-600' : 'text-gray-600 hover:text-red-500'}`}
+          to="/character-builder" 
+          className={`font-medium transition-colors ${location.pathname === '/character-builder' ? 'text-red-600' : 'text-gray-600 hover:text-red-500'}`}
         >
-          Tạo Ảnh
+          Tạo Nhân Vật
+        </Link>
+        <Link 
+          to="/generator" 
+          className={`font-medium transition-colors text-sm ${location.pathname === '/generator' ? 'text-red-600' : 'text-gray-500 hover:text-red-400'}`}
+        >
+          Tạo Ảnh (Legacy)
         </Link>
         <Link 
           to="/gallery" 

@@ -337,6 +337,33 @@ app.post('/api/generate-image', (req, res) => {
   runPythonCLI(res, args);
 });
 
+// New Endpoint for Character Customizer (Phase 1 Mock / Forwarder)
+app.post('/api/generate-custom-character', (req, res) => {
+  const { config, action, export_format, resolution } = req.body;
+  
+  if (!config || !config.base_id) {
+    return res.status(400).json({ error: 'Missing character config' });
+  }
+
+  console.log("Nhận yêu cầu xuất Form Output:", req.body);
+  
+  // TO DO cho AI Team: 
+  // Thay thế block mock này bằng code gọi Python Model thực tế nhận JSON payload.
+  // Hiện tại tạm thời giả lập độ trễ AI 2s và trả về ảnh placeholder hoặc gọi AI sinh ảnh chung chung.
+  
+  const targetSubject = `A pixel art character with ${config.hair_id}, ${config.outfit_id}, performing ${action} action`;
+  
+  const args = [
+    'sprite', targetSubject,
+    '--size', 'sprite_medium',
+    '--style', 'pixel_art',
+    '--out', baseOutputDir
+  ];
+  
+  runPythonCLI(res, args);
+});
+
+
 app.listen(PORT, () => {
   console.log(`Server Backend MindX Asset Generator đang chạy trên cổng ${PORT}`);
 });

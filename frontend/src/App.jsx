@@ -3,6 +3,7 @@ import Header from './components/layout/Header';
 import Home from './pages/Home';
 import Generator from './pages/Generator';
 import Gallery from './pages/Gallery';
+import CharacterBuilder from './pages/CharacterBuilder/CharacterBuilder';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -13,6 +14,7 @@ function App() {
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/character-builder" element={<CharacterBuilder />} />
           <Route path="/generator" element={<Generator />} />
           <Route path="/gallery" element={<Gallery />} />
         </Routes>
