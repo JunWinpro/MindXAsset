@@ -11,10 +11,9 @@ const CategoryMenu = ({ categories = [], activeCategory, onSelectCategory }) => 
             onClick={() => onSelectCategory(cat.id)}
             className={`
               w-full py-2.5 px-3 rounded-lg font-sans font-bold text-sm tracking-wide uppercase flex items-center gap-3 border transition-all
-              ${
-                isActive
-                  ? 'bg-red-600 text-white border-red-700 shadow-md translate-x-1'
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-red-600 shadow-sm'
+              ${isActive
+                ? 'bg-red-600 text-white border-red-700 shadow-md translate-x-1'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-red-600 shadow-sm'
               }
             `}
           >
