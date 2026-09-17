@@ -4183,9 +4183,9 @@ export const assetConfig = {
   ]
 };
 
-export const getLayerSource = (category, optionId) => {
+export const getLayerSource = (category, optionId, currentConfig) => {
   if (!optionId || optionId.endsWith('_none')) return [];
-  const optionsList = assetConfig[category] || [];
+  const optionsList = (currentConfig || assetConfig)[category] || [];
   const selectedOpt = optionsList.find(opt => opt.id === optionId);
   if (selectedOpt && selectedOpt.layers) {
     return selectedOpt.layers;

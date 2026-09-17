@@ -1,17 +1,64 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import CanvasPreview from './CanvasPreview';
 import CategoryMenu from './CategoryMenu';
 import CustomizerInspector from './CustomizerInspector';
 import { assetConfig, colorPalettes, getLayerSource } from './assets_config';
+import { monsterConfig, getMonsterLayers } from './monster_config';
 import SpritePreviewModal from '../../components/SpritePreviewModal';
 
+const CHARACTER_MODELS = [
+  {
+    id: 'pipoya',
+    name: 'RPG Pixel (Chung)',
+    frameSize: 32,
+    isSpritesheet: true,
+    config: assetConfig,
+    categories: [
+      { id: 'bases', label: 'Body (Thân)', icon: '👤' },
+      { id: 'eyes', label: 'Eyes (Mắt)', icon: '👁️' },
+      { id: 'hairs', label: 'Hair (Tóc)', icon: '💇' },
+      { id: 'tops', label: 'Clothes (Áo)', icon: '👕' },
+      { id: 'hats', label: 'Hats (Nón/Mũ)', icon: '🎩' },
+      { id: 'glasses', label: 'Glasses (Kính)', icon: '🕶️' },
+      { id: 'ears', label: 'Ears (Tai thú)', icon: '🐱' },
+      { id: 'tails', label: 'Tails (Đuôi)', icon: '🦊' },
+      { id: 'items', label: 'Items (Vật phẩm)', icon: '⚔️' },
+      { id: 'cloaks', label: 'Cloaks (Áo choàng)', icon: '🦇' },
+      { id: 'beards', label: 'Beards (Râu)', icon: '🧔' },
+      { id: 'hairadds', label: 'Hair Adds (Phụ kiện tóc)', icon: '🎀' },
+      { id: 'makeup', label: 'Makeup (Trang điểm)', icon: '💄' }
+    ]
+  },
+  {
+    id: 'monster',
+    name: 'Monster (Quái Vật)',
+    frameSize: 256,
+    isSpritesheet: false,
+    config: monsterConfig,
+    categories: [
+      { id: 'body', label: 'Body (Thân)', icon: '👾' },
+      { id: 'leg', label: 'Legs (Chân)', icon: '🦵' },
+      { id: 'arm', label: 'Arms (Tay)', icon: '💪' },
+      { id: 'detail', label: 'Sừng/Tai', icon: '✨' },
+      { id: 'eye', label: 'Eyes (Mắt)', icon: '👁️' },
+      { id: 'eyebrow', label: 'Eyebrow (Lông mày)', icon: '🤨' },
+      { id: 'mouth', label: 'Mouth (Miệng)', icon: '👄' },
+      { id: 'nose', label: 'Nose (Mũi)', icon: '👃' }
+    ]
+  }
+];
+
 const CharacterBuilder = () => {
+  // Lựa chọn Model
+  const [currentModelId, setCurrentModelId] = useState('pipoya');
+  const currentModel = CHARACTER_MODELS.find(m => m.id === currentModelId);
+
   // Tên nhân vật
   const [characterName, setCharacterName] = useState('MindX Character');
-  
+
   // Tab danh mục đang chọn ở cột trái
-  const [activeCategory, setActiveCategory] = useState('bases');
+  const [activeCategory, setActiveCategory] = useState(currentModel.categories[0].id);
 
   // Trạng thái nền trong suốt
   const [transparentBg, setTransparentBg] = useState(false);
@@ -37,14 +84,21 @@ const CharacterBuilder = () => {
     action: 'idle'
   });
 
+  // Reset selections when changing model
+  useEffect(() => {
+    const newSelections = { action: 'idle' };
+    currentModel.categories.forEach(cat => {
+      const options = currentModel.config[cat.id] || [];
+      if (options.length > 0) {
+        newSelections[cat.id] = options[0].id;
+      }
+    });
+    setSelections(newSelections);
+    setActiveCategory(currentModel.categories[0].id);
+  }, [currentModelId]);
+
   // Bảng màu cho từng bộ phận (Color Modulation)
-  const [colors, setColors] = useState({
-    bases: '#ffffff',
-    hairs: '#ffffff',
-    tops: '#ffffff',
-    hats: '#ffffff',
-    eyes: '#ffffff'
-  });
+  const [colors, setColors] = useState({});
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -66,25 +120,16 @@ const CharacterBuilder = () => {
     setCharacterName(randomNames[Math.floor(Math.random() * randomNames.length)]);
 
     const newSelections = { ...selections };
-    const newColors = { ...colors };
 
-    const categories = ['bases', 'eyes', 'hairs', 'tops', 'hats', 'glasses', 'ears', 'tails', 'items', 'cloaks', 'beards', 'hairadds', 'makeup'];
-    categories.forEach(cat => {
-      const options = assetConfig[cat] || [];
+    currentModel.categories.forEach(cat => {
+      const options = currentModel.config[cat.id] || [];
       if (options.length > 0) {
         const randOpt = options[Math.floor(Math.random() * options.length)];
-        newSelections[cat] = randOpt.id;
-      }
-
-      const presets = colorPalettes[cat] || [];
-      if (presets.length > 0) {
-        const randColor = presets[Math.floor(Math.random() * presets.length)];
-        newColors[cat] = randColor.hex;
+        newSelections[cat.id] = randOpt.id;
       }
     });
 
     setSelections(newSelections);
-    setColors(newColors);
     toast.info("Đã tạo nhân vật ngẫu nhiên! 🎲");
   };
 
@@ -98,14 +143,23 @@ const CharacterBuilder = () => {
 
   // Tổng hợp layers kèm xử lý Exclusion Rules
   const activeLayers = useMemo(() => {
+    if (currentModel.id === 'monster') {
+      return getMonsterLayers(selections).map(l => {
+        const baseCat = l.category.split('_')[0];
+        return {
+          ...l,
+          color: colors[baseCat] || colors[l.category] || '#ffffff'
+        };
+      }).sort((a, b) => (a.z_index || 0) - (b.z_index || 0));
+    }
+
     let layers = [];
-    const categories = ['bases', 'eyes', 'hairs', 'tops', 'hats', 'glasses', 'ears', 'tails', 'items', 'cloaks', 'beards', 'hairadds', 'makeup'];
     const selectedOptions = {};
 
-    categories.forEach(cat => {
-      const selectedId = selections[cat];
-      const option = assetConfig[cat]?.find(o => o.id === selectedId);
-      if (option) selectedOptions[cat] = option;
+    currentModel.categories.forEach(cat => {
+      const selectedId = selections[cat.id];
+      const option = (currentModel.config[cat.id] || []).find(o => o.id === selectedId);
+      if (option) selectedOptions[cat.id] = option;
     });
 
     // Xác định layer bị ẩn do Exclusion Rules (VD: mũ trùm đầu thì ẩn tóc)
@@ -117,20 +171,26 @@ const CharacterBuilder = () => {
     });
 
     // Render layers
-    categories.forEach(cat => {
-      if (!hiddenCategories.has(cat) && selectedOptions[cat]) {
-        const opt = selectedOptions[cat];
+    currentModel.categories.forEach(cat => {
+      if (!hiddenCategories.has(cat.id) && selectedOptions[cat.id]) {
+        const opt = selectedOptions[cat.id];
         // Lấy danh sách layers (trả về mảng {src, z_index})
-        const layerArr = getLayerSource(cat, opt.id);
+        const layerArr = getLayerSource(cat.id, opt.id, currentModel.config);
         if (layerArr && layerArr.length > 0) {
           layerArr.forEach(l => {
+            let layerColor = colors[cat.id] || '#ffffff';
+            // Arms should inherit skin color from 'base' or 'bases'
+            if (cat.id === 'arms') {
+              layerColor = colors['base'] || colors['bases'] || '#ffffff';
+            }
+
             layers.push({
               id: opt.id,
               name: opt.name,
-              category: cat,
+              category: cat.id,
               src: l.src,
               z_index: l.z_index,
-              color: colors[cat] || '#ffffff'
+              color: layerColor
             });
           });
         }
@@ -141,12 +201,12 @@ const CharacterBuilder = () => {
     layers.sort((a, b) => (a.z_index || 0) - (b.z_index || 0));
 
     return layers;
-  }, [selections, colors]);
+  }, [selections, colors, currentModel]);
 
   // Gửi thông tin sang AI / Backend
   const handleGenerate = async () => {
     setIsGenerating(true);
-    
+
     const formOutput = {
       name: characterName,
       config: selections,
@@ -163,10 +223,10 @@ const CharacterBuilder = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formOutput)
       });
-      
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Lỗi server');
-      
+
       setImageResult(data.imageUrl);
       setShowPreviewModal(true);
       toast.success("Tạo hoạt ảnh AI thành công!");
@@ -181,7 +241,7 @@ const CharacterBuilder = () => {
   return (
     <div className="flex-1 bg-[#F8F9FA] py-8 px-4 sm:px-8 font-sans border-t border-gray-200">
       <div className="max-w-6xl mx-auto flex flex-col gap-6">
-        
+
         {/* Banner Tiêu đề */}
         <div className="text-center mb-2">
           <h1 className="text-3xl sm:text-4xl font-black text-gray-900 font-sans tracking-tight">
@@ -194,45 +254,64 @@ const CharacterBuilder = () => {
 
         {/* Bố cục 3 CỘT chuẩn */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          
+
           {/* CỘT 1: Danh mục chọn nhanh (Trái) */}
           <div className="md:col-span-3 flex flex-col gap-4">
+            {/* Chọn Model Nhân vật */}
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                Danh Mục
+                Loại Nhân Vật
+              </h2>
+              <select
+                value={currentModelId}
+                onChange={(e) => setCurrentModelId(e.target.value)}
+                className="w-full bg-red-50 text-red-700 font-bold border border-red-200 py-2.5 px-3 rounded-lg font-sans text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-shadow"
+              >
+                {CHARACTER_MODELS.map(model => (
+                  <option key={model.id} value={model.id}>{model.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                Bộ Phận
               </h2>
               <CategoryMenu
+                categories={currentModel.categories}
                 activeCategory={activeCategory}
                 onSelectCategory={setActiveCategory}
               />
             </div>
 
             {/* Chế độ động tác (Action Pose) */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-              <label className="text-xs font-bold uppercase tracking-widest block mb-2 text-gray-500">
-                Động tác (Action)
-              </label>
-              <select
-                value={selections.action}
-                onChange={(e) => handleSelectOption('action', e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 text-gray-800 py-2.5 px-3 rounded-lg font-sans text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-shadow"
-              >
-                <option value="idle">Đứng im (Idle)</option>
-                <option value="run">Chạy (Run)</option>
-                <option value="attack">Tấn công (Attack)</option>
-              </select>
-            </div>
+            {currentModel.isSpritesheet && (
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <label className="text-xs font-bold uppercase tracking-widest block mb-2 text-gray-500">
+                  Động tác (Action)
+                </label>
+                <select
+                  value={selections.action}
+                  onChange={(e) => handleSelectOption('action', e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-300 text-gray-800 py-2.5 px-3 rounded-lg font-sans text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-shadow"
+                >
+                  <option value="idle">Đứng im (Idle)</option>
+                  <option value="run">Chạy (Run)</option>
+                  <option value="attack">Tấn công (Attack)</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* CỘT 2: Khung xem trước nhân vật (Giữa) */}
           <div className="md:col-span-5 flex flex-col gap-4">
             <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm w-full flex flex-col items-center">
-              
+
               {/* Công tắc Xóa nền */}
               <div className="w-full flex justify-end mb-3">
                 <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={transparentBg}
                     onChange={(e) => setTransparentBg(e.target.checked)}
                     className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
@@ -241,8 +320,16 @@ const CharacterBuilder = () => {
                 </label>
               </div>
 
-              {/* Canvas Preview có bục đứng Pixel */}
-              <CanvasPreview ref={canvasPreviewRef} layers={activeLayers} width={380} height={380} transparentBg={transparentBg} />
+              {/* Canvas Preview */}
+              <CanvasPreview
+                ref={canvasPreviewRef}
+                layers={activeLayers}
+                width={currentModel.isSpritesheet ? 380 : 360}
+                height={currentModel.isSpritesheet ? 380 : 640}
+                transparentBg={transparentBg}
+                frameSize={currentModel.frameSize}
+                isSpritesheet={currentModel.isSpritesheet}
+              />
 
               {/* Tên nhân vật */}
               <div className="mt-5 w-full flex justify-center">
@@ -311,6 +398,7 @@ const CharacterBuilder = () => {
               colors={colors}
               onSelectOption={handleSelectOption}
               onSelectColor={handleSelectColor}
+              currentConfig={currentModel.config}
             />
           </div>
 

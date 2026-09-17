@@ -1,0 +1,79 @@
+
+
+FAQ ❓ Frequently Asked Questions – CozyFae Cute Portrait Pack – Free Sample
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+What’s different between this sample and the full pack?
+
+This sample includes a **limited number of base parts** and **simplified animation frames**.  
+The full version will include:
+- More animation frames and smoother motion
+- Additional body types or styles (if applicable)
+- More clothing, accessories, and customization options
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Can I use these sprites in a game jam?
+Absolutely! This sample is perfect for game jams and prototypes.
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Can I use these assets for streaming, videos, or tutorials?
+
+Yes, you're welcome to use them in content like game dev streams or tutorials, I would love to see what you make with them —
+just be sure to credit me in the description and on-screen.
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Do I have to credit you even if I edit the sprites?
+Yes. Credit is required whether you use the sprites as-is or modify them. This applies to both personal and commercial projects.
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Can I use this sample in a commercial project?
+Yes, commercial use is allowed — as long as you **give proper credit** (see LICENSE.txt or ATTRIBUTION.txt for how to do that).
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Can I redistribute or share these assets with others?
+No. Please do not re-upload, repackage, or redistribute these assets (even for free).
+If someone wants the sample, please direct them to the official itch.io page.
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+Can I use these assets in NFTs or blockchain projects?
+No. These assets may NOT be used in any form of NFT, blockchain, cryptocurrency or any related project — whether commercial or non-commercial.
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+Can I use these assets for AI training or datasets?
+Absolutely not. You are NOT PERMITTED to use these assets to train AI models, 
+feed into datasets, or generate derivative content using AI systems.
+
+This includes any form of automated processing that extracts data from the assets, even if modified.
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+Can I sell a game that uses this sample?
+
+Yes, you can sell a game that uses the sample assets,
+as long as credit is given and the assets are not sold or offered separately as part of your product.
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+Will the full version ever be free too?
+No, the full version is a paid asset pack. This sample is free so you can test it out and see if it fits your needs.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+Where can I follow for updates or the full release?
+
+You can find updates and info about upcoming packs here:
+
+- Itch.io: [CozyFae](https://cozy-fae.itch.io/)
+- Discord: [cozyfaestudio] (https://discord.com/users/1340043404637376613)
+- Email: [cozyfaestudio@gmail.com]
+
+Still have questions? Feel free to reach out via social media or email. 😊

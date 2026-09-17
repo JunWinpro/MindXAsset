@@ -1,14 +1,15 @@
 import React from 'react';
-import { assetConfig, colorPalettes } from './assets_config';
+import { colorPalettes } from './assets_config';
 
 const CustomizerInspector = ({
   activeCategory,
   selections,
   colors,
   onSelectOption,
-  onSelectColor
+  onSelectColor,
+  currentConfig
 }) => {
-  const currentOptions = assetConfig[activeCategory] || [];
+  const currentOptions = (currentConfig || {})[activeCategory] || [];
   const currentColor = colors[activeCategory] || '#ffffff';
   const presets = colorPalettes[activeCategory] || [];
 
